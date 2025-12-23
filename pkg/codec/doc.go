@@ -69,4 +69,4 @@
 //
 // These errors are wrapped with additional context using the crex package
 // error conventions.
-package types
+package codec
