@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/BurntSushi/toml"
-	"github.com/cruciblehq/protocol/pkg/crex"
+	"github.com/cruciblehq/protocol/internal/helpers"
 	"github.com/go-viper/mapstructure/v2"
 	"gopkg.in/yaml.v3"
 )
@@ -25,12 +25,12 @@ func Encode(contentType ContentType, key string, v any) ([]byte, error) {
 		TagName: key,
 	})
 	if err != nil {
-		return nil, crex.Wrap(ErrEncodingFailed, err)
+		return nil, helpers.Wrap(ErrEncodingFailed, err)
 	}
 
 	// Decode
 	if err := decoder.Decode(v); err != nil {
-		return nil, crex.Wrap(ErrEncodingFailed, err)
+		return nil, helpers.Wrap(ErrEncodingFailed, err)
 	}
 
 	// Map to the target format
@@ -50,7 +50,7 @@ func Encode(contentType ContentType, key string, v any) ([]byte, error) {
 func encodeJSON(v any) ([]byte, error) {
 	data, err := json.Marshal(v)
 	if err != nil {
-		return nil, crex.Wrap(ErrEncodingFailed, err)
+		return nil, helpers.Wrap(ErrEncodingFailed, err)
 	}
 	return data, nil
 }
@@ -59,7 +59,7 @@ func encodeJSON(v any) ([]byte, error) {
 func encodeYAML(v any) ([]byte, error) {
 	data, err := yaml.Marshal(v)
 	if err != nil {
-		return nil, crex.Wrap(ErrEncodingFailed, err)
+		return nil, helpers.Wrap(ErrEncodingFailed, err)
 	}
 	return data, nil
 }
@@ -69,7 +69,7 @@ func encodeTOML(v any) ([]byte, error) {
 	var buf bytes.Buffer
 	encoder := toml.NewEncoder(&buf)
 	if err := encoder.Encode(v); err != nil {
-		return nil, crex.Wrap(ErrEncodingFailed, err)
+		return nil, helpers.Wrap(ErrEncodingFailed, err)
 	}
 	return buf.Bytes(), nil
 }
@@ -86,15 +86,15 @@ func Decode(contentType ContentType, key string, target any, data []byte) error 
 	switch contentType {
 	case ContentTypeJSON:
 		if err := json.Unmarshal(data, &raw); err != nil {
-			return crex.Wrap(ErrDecodingFailed, err)
+			return helpers.Wrap(ErrDecodingFailed, err)
 		}
 	case ContentTypeYAML:
 		if err := yaml.Unmarshal(data, &raw); err != nil {
-			return crex.Wrap(ErrDecodingFailed, err)
+			return helpers.Wrap(ErrDecodingFailed, err)
 		}
 	case ContentTypeTOML:
 		if err := toml.Unmarshal(data, &raw); err != nil {
-			return crex.Wrap(ErrDecodingFailed, err)
+			return helpers.Wrap(ErrDecodingFailed, err)
 		}
 	default:
 		return ErrUnsupportedContentType
@@ -105,11 +105,11 @@ func Decode(contentType ContentType, key string, target any, data []byte) error 
 		TagName: key,
 	})
 	if err != nil {
-		return crex.Wrap(ErrDecodingFailed, err)
+		return helpers.Wrap(ErrDecodingFailed, err)
 	}
 
 	if err := decoder.Decode(raw); err != nil {
-		return crex.Wrap(ErrDecodingFailed, err)
+		return helpers.Wrap(ErrDecodingFailed, err)
 	}
 
 	return nil

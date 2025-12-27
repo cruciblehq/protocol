@@ -3,7 +3,7 @@ package reference
 import (
 	"strings"
 
-	"github.com/cruciblehq/protocol/pkg/crex"
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 // Resource reference.
@@ -57,7 +57,7 @@ func Parse(s string, contextType string, options *IdentifierOptions) (*Reference
 	}
 	ref, err := p.parse(contextType)
 	if err != nil {
-		return nil, crex.Wrap(ErrInvalidReference, err)
+		return nil, helpers.Wrap(ErrInvalidReference, err)
 	}
 	return ref, nil
 }

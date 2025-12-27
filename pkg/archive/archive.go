@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cruciblehq/protocol/pkg/crex"
+	"github.com/cruciblehq/protocol/internal/helpers"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -26,14 +26,14 @@ import (
 func Create(src, dest string) (err error) {
 	file, err := os.Create(dest)
 	if err != nil {
-		return crex.Wrap(ErrCreateFailed, err)
+		return helpers.Wrap(ErrCreateFailed, err)
 	}
 	defer file.Close()
 
 	zw, err := zstd.NewWriter(file)
 	if err != nil {
 		os.Remove(dest)
-		return crex.Wrap(ErrCreateFailed, err)
+		return helpers.Wrap(ErrCreateFailed, err)
 	}
 	defer func() {
 		zw.Close()
@@ -46,7 +46,7 @@ func Create(src, dest string) (err error) {
 	defer tw.Close()
 
 	if err = writeTar(tw, src); err != nil {
-		return crex.Wrap(ErrCreateFailed, err)
+		return helpers.Wrap(ErrCreateFailed, err)
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func Create(src, dest string) (err error) {
 func Extract(src, dest string) error {
 	file, err := os.Open(src)
 	if err != nil {
-		return crex.Wrap(ErrExtractFailed, err)
+		return helpers.Wrap(ErrExtractFailed, err)
 	}
 	defer file.Close()
 
@@ -77,18 +77,18 @@ func Extract(src, dest string) error {
 // Same behavior as [Extract] but reads from an [io.Reader] instead of a file.
 func ExtractFromReader(r io.Reader, dest string) error {
 	if _, statErr := os.Stat(dest); statErr == nil {
-		return crex.Wrap(ErrExtractFailed, os.ErrExist)
+		return helpers.Wrap(ErrExtractFailed, os.ErrExist)
 	}
 
 	zr, err := zstd.NewReader(r)
 	if err != nil {
-		return crex.Wrap(ErrExtractFailed, err)
+		return helpers.Wrap(ErrExtractFailed, err)
 	}
 	defer zr.Close()
 
 	err = extractToDirectory(tar.NewReader(zr), dest)
 	if err != nil {
-		return crex.Wrap(ErrExtractFailed, err)
+		return helpers.Wrap(ErrExtractFailed, err)
 	}
 
 	return nil

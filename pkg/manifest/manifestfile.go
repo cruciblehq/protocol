@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cruciblehq/protocol/pkg/crex"
+	"github.com/cruciblehq/protocol/internal/helpers"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 )
@@ -32,19 +32,19 @@ func Read(dir string) (*Manifest, error) {
 	// Read file
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, crex.Wrap(ErrManifestReadFailed, err)
+		return nil, helpers.Wrap(ErrManifestReadFailed, err)
 	}
 
 	// Unmarshal raw YAML into a map
 	var raw map[string]any
 	if err := yaml.Unmarshal(data, &raw); err != nil {
-		return nil, crex.Wrap(ErrManifestReadFailed, err)
+		return nil, helpers.Wrap(ErrManifestReadFailed, err)
 	}
 
 	// Decode into Manifest struct
 	var m Manifest
 	if err := decodeManifest(raw, &m); err != nil {
-		return nil, crex.Wrap(ErrManifestReadFailed, err)
+		return nil, helpers.Wrap(ErrManifestReadFailed, err)
 	}
 
 	return &m, nil

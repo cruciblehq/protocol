@@ -1,4 +1,4 @@
-package crex
+package helpers
 
 import "fmt"
 
@@ -8,6 +8,8 @@ import "fmt"
 // need to be wrapped without adding user-facing context. It enforces the
 // convention that the sentinel error comes first, followed by the underlying
 // error, and both arguments must be errors (not strings).
+//
+// Note: This is a duplicate of the crex.Wrap function to avoid import cycles.
 func Wrap(sentinel error, err error) error {
 	return fmt.Errorf("%w: %w", sentinel, err)
 }

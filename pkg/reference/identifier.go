@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cruciblehq/protocol/pkg/crex"
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 const (
@@ -93,7 +93,7 @@ func ParseIdentifier(s string, contextType string, options *IdentifierOptions) (
 	}
 	id, err := p.parse(contextType)
 	if err != nil {
-		return nil, crex.Wrap(ErrInvalidIdentifier, err)
+		return nil, helpers.Wrap(ErrInvalidIdentifier, err)
 	}
 	return id, nil
 }

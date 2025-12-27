@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cruciblehq/protocol/pkg/crex"
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 var (
@@ -102,7 +102,7 @@ func ParseVersionConstraint(s string) (*VersionConstraint, error) {
 
 		group, err := parseConstraintGroup(orPart)
 		if err != nil {
-			return nil, crex.Wrap(ErrInvalidReference, err)
+			return nil, helpers.Wrap(ErrInvalidReference, err)
 		}
 		vc.constraints = append(vc.constraints, group)
 	}
