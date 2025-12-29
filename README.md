@@ -16,12 +16,6 @@ manifest parsing, archive handling, and serialization utilities.
 Resource identification and version constraint parsing. Implements the complete
 Crucible reference syntax for locating and versioning resources.
 
-**Key features:**
-- Parse resource identifiers (scheme, registry, namespace, name)
-- Semantic version constraints with operators, ranges, wildcards
-- Channel-based references for release tracks
-- Content-addressable digests for immutable references
-
 ```go
 import "github.com/cruciblehq/protocol/pkg/reference"
 
@@ -36,15 +30,51 @@ vc, err := reference.ParseVersionConstraint(">=1.0.0 <2.0.0")
 ok, err := vc.Matches("1.5.0") // true
 ```
 
-### [`pkg/types`](pkg/types)
+### [`pkg/manifest`](pkg/manifest)
 
-Domain types and serialization utilities for registry entities.
+Resource manifest parsing and validation. Looks for Crucible manifest files
+under `path/.cruciblerc/manifest.yaml` and parses and validates according to
+Crucible's expected format.
 
-**Key features:**
-- Core types: `Namespace`, `Resource`, `Version`, `Channel`, `Error`
-- Format-agnostic serialization (JSON, YAML, TOML)
-- Media type constants for content negotiation
-- File I/O with automatic format detection
+```go
+import "github.com/cruciblehq/protocol/pkg/manifest"
+
+// Read manifest from resource directory
+m, err := manifest.Read("/path/to/resource")
+
+// Access type-specific config
+switch cfg := m.Config.(type) {
+case *manifest.Widget:
+    fmt.Println(cfg.Build.Main)
+case *manifest.Service:
+    fmt.Println(cfg.Build.Main)
+}
+```
+
+### [`pkg/archive`](pkg/archive)
+
+Creation and extraction of zstd-compressed tar archives. Used for handling
+Crucible resource archives.
+
+```go
+import "github.com/cruciblehq/protocol/pkg/archive"
+
+// Create archive
+err := archive.Create("mydir", "output.tar.zst")
+
+// Extract archive
+err = archive.Extract("output.tar.zst", "destination")
+
+// Extract from reader
+file, _ := os.Open("output.tar.zst")
+defer file.Close()
+err = archive.ExtractFromReader(file, "destination")
+```
+
+### [`pkg/codec`](pkg/codec)
+
+Domain types and serialization with support for format-agnostic serialization,
+including JSON, YAML, and TOML.
 
 ```go
 import "github.com/cruciblehq/protocol/pkg/types"
@@ -65,78 +95,55 @@ err = types.Decode(types.ContentTypeJSON, "field", &ns, data)
 err = types.EncodeFile("namespace.yaml", "field", ns)
 ```
 
-### [`pkg/manifest`](pkg/manifest)
+### [`pkg/registry`](pkg/registry)
 
-Resource manifest parsing and validation.
-
-**Key features:**
-- Parse `.cruciblerc/manifest.yaml` files
-- Type-specific configuration (Widget, Service)
-- Validation of manifest structure and fields
+Artifact registry implementation with hierarchical storage for versioned
+resources. Provides a complete registry interface with namespace, resource,
+version, and channel management.
 
 ```go
-import "github.com/cruciblehq/protocol/pkg/manifest"
+import (
+    "github.com/cruciblehq/protocol/pkg/registry"
+    "database/sql"
+)
 
-// Read manifest from resource directory
-m, err := manifest.Read("/path/to/resource")
+// Create a new registry
+db, _ := sql.Open("sqlite3", "registry.db?_foreign_keys=on")
+reg, err := registry.NewSQLRegistry(db, "/path/to/archives", logger)
 
-// Access type-specific config
-switch cfg := m.Config.(type) {
-case *manifest.Widget:
-    fmt.Println(cfg.Build.Main)
-case *manifest.Service:
-    fmt.Println(cfg.Build.Main)
-}
-```
+// Create namespace
+ns, err := reg.CreateNamespace(ctx, registry.NamespaceInfo{
+    Name:        "myorg",
+    Description: "My organization",
+})
 
-### [`pkg/archive`](pkg/archive)
+// Create resource
+res, err := reg.CreateResource(ctx, "myorg", registry.ResourceInfo{
+    Name:        "mywidget",
+    Type:        "widget",
+    Description: "My widget",
+})
 
-Secure creation and extraction of zstd-compressed tar archives.
+// Create version
+ver, err := reg.CreateVersion(ctx, "myorg", "mywidget", registry.VersionInfo{
+    String: "1.0.0",
+})
 
-**Key features:**
-- Zstd compression for efficient storage
-- Path validation to prevent directory traversal
-- Symlink rejection for security
-- Atomic extraction with automatic cleanup on error
-
-```go
-import "github.com/cruciblehq/protocol/pkg/archive"
-
-// Create archive
-err := archive.Create("mydir", "output.tar.zst")
-
-// Extract archive
-err = archive.Extract("output.tar.zst", "destination")
-
-// Extract from reader
-file, _ := os.Open("output.tar.zst")
+// Upload archive
+file, _ := os.Open("widget.tar.zst")
 defer file.Close()
-err = archive.ExtractFromReader(file, "destination")
-```
+ver, err = reg.UploadArchive(ctx, "myorg", "mywidget", "1.0.0", file)
 
-### [`pkg/crex`](pkg/crex)
+// Create channel
+ch, err := reg.CreateChannel(ctx, "myorg", "mywidget", registry.ChannelInfo{
+    Name:        "stable",
+    Version:     "1.0.0",
+    Description: "Stable channel",
+})
 
-Structured error management for user-facing applications.
-
-**Key features:**
-- Rich error context (description, reason, fallback, cause)
-- Error classification (User, System, Programming, Bug)
-- Structured logging integration via `slog.LogValuer`
-- Custom log handler with buffering support
-- TTY-aware formatting (pretty vs JSON)
-
-```go
-import "github.com/cruciblehq/protocol/pkg/crex"
-
-// Create structured errors
-err := crex.UserError("could not save file", "insufficient permissions").
-    Fallback("Try running with elevated privileges.").
-    Detail("path", filePath).
-    Cause(previousError).
-    Err()
-
-// Use simple wrapping at package boundaries
-return crex.Wrap(ErrInvalidInput, err)
+// Download archive
+reader, err := reg.DownloadArchive(ctx, "myorg", "mywidget", "1.0.0")
+defer reader.Close()
 ```
 
 ## Installation
