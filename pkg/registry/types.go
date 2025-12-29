@@ -87,6 +87,7 @@ type NamespaceSummary struct {
 	Description   string `field:"description"`   // Human-readable description.
 	ResourceCount int    `field:"resourceCount"` // Number of resources in this namespace.
 	CreatedAt     int64  `field:"createdAt"`     // When the namespace was created.
+	UpdatedAt     int64  `field:"updatedAt"`     // When the namespace was last updated.
 }
 
 // Complete namespace with its resource listings.
@@ -100,6 +101,7 @@ type Namespace struct {
 	Description string            `field:"description"` // Human-readable description.
 	Resources   []ResourceSummary `field:"resources"`   // List of resources (summary form).
 	CreatedAt   int64             `field:"createdAt"`   // When the namespace was created.
+	UpdatedAt   int64             `field:"updatedAt"`   // When the namespace was last updated.
 }
 
 // Collection of namespaces.
@@ -129,14 +131,14 @@ type ResourceInfo struct {
 // read-only fields like timestamps, statistics, and latest version information
 // to help with navigation decisions.
 type ResourceSummary struct {
-	Name                   string  `field:"name"`                   // Resource name.
-	Type                   string  `field:"type"`                   // Resource type (e.g., "widget", "service").
-	Description            string  `field:"description"`            // Human-readable description.
-	LatestVersion          *string `field:"latestVersion"`          // Most recent version string (null if no versions).
-	LatestPublishedVersion *string `field:"latestPublishedVersion"` // Most recent published version string (null if no published versions).
-	VersionCount           int     `field:"versionCount"`           // Number of versions for this resource.
-	ChannelCount           int     `field:"channelCount"`           // Number of channels for this resource.
-	CreatedAt              int64   `field:"createdAt"`              // When the resource was created.
+	Name          string  `field:"name"`          // Resource name.
+	Type          string  `field:"type"`          // Resource type (e.g., "widget", "service").
+	Description   string  `field:"description"`   // Human-readable description.
+	LatestVersion *string `field:"latestVersion"` // Most recent version string (null if no versions).
+	VersionCount  int     `field:"versionCount"`  // Number of versions for this resource.
+	ChannelCount  int     `field:"channelCount"`  // Number of channels for this resource.
+	CreatedAt     int64   `field:"createdAt"`     // When the resource was created.
+	UpdatedAt     int64   `field:"updatedAt"`     // When the resource was last updated.
 }
 
 // Complete resource with all its versions and channels.
@@ -154,6 +156,7 @@ type Resource struct {
 	Versions    []VersionSummary `field:"versions"`    // List of versions (summary form).
 	Channels    []ChannelSummary `field:"channels"`    // List of channels (summary form).
 	CreatedAt   int64            `field:"createdAt"`   // When the resource was created.
+	UpdatedAt   int64            `field:"updatedAt"`   // When the resource was last updated.
 }
 
 // Collection of resources.
@@ -170,8 +173,7 @@ type ResourceList struct {
 // update context. Contains only user-modifiable fields. The media type is
 // [MediaTypeVersionInfo].
 type VersionInfo struct {
-	Version     string `field:"version"`     // Version string (e.g., "1.0.0").
-	Description string `field:"description"` // Human-readable description.
+	String string `field:"string"` // Version string (e.g., "1.0.0").
 }
 
 // Lightweight version representation for listings.
@@ -180,10 +182,9 @@ type VersionInfo struct {
 // listings and version lists to keep payloads compact. Includes read-only
 // fields like publication status and timestamps.
 type VersionSummary struct {
-	Version     string `field:"version"`     // Version string (e.g., "1.0.0").
-	Description string `field:"description"` // Human-readable description.
-	PublishedAt *int64 `field:"publishedAt"` // When published (null if unpublished).
-	CreatedAt   int64  `field:"createdAt"`   // When the version was created.
+	String    string `field:"string"`    // Version string (e.g., "1.0.0").
+	CreatedAt int64  `field:"createdAt"` // When the version was created.
+	UpdatedAt int64  `field:"updatedAt"` // When the version was last updated.
 }
 
 // Complete version with archive details and publication status.
@@ -198,15 +199,14 @@ type VersionSummary struct {
 // scoping information to identify the version's location. The media type is
 // [MediaTypeVersion].
 type Version struct {
-	Namespace   string  `field:"namespace"`   // Namespace this version belongs to.
-	Resource    string  `field:"resource"`    // Resource this version belongs to.
-	Version     string  `field:"version"`     // Version string (e.g., "1.0.0").
-	Description string  `field:"description"` // Human-readable description.
-	PublishedAt *int64  `field:"publishedAt"` // When published (null if unpublished).
-	Archive     *string `field:"archive"`     // Download URL or null if not uploaded.
-	Size        *int64  `field:"size"`        // Archive size in bytes (null if not uploaded).
-	Digest      *string `field:"digest"`      // Archive digest (e.g., "sha256:abc...", null if not uploaded).
-	CreatedAt   int64   `field:"createdAt"`   // When the version was created.
+	Namespace string  `field:"namespace"` // Namespace this version belongs to.
+	Resource  string  `field:"resource"`  // Resource this version belongs to.
+	String    string  `field:"string"`    // Version string (e.g., "1.0.0").
+	Archive   *string `field:"archive"`   // Download URL or null if not uploaded.
+	Size      *int64  `field:"size"`      // Archive size in bytes (null if not uploaded).
+	Digest    *string `field:"digest"`    // Archive digest (e.g., "sha256:abc...", null if not uploaded).
+	CreatedAt int64   `field:"createdAt"` // When the version was created.
+	UpdatedAt int64   `field:"updatedAt"` // When the version was last updated.
 }
 
 // Collection of versions for a resource.
@@ -239,6 +239,7 @@ type ChannelSummary struct {
 	Version     string `field:"version"`     // Version this channel points to.
 	Description string `field:"description"` // Human-readable description.
 	CreatedAt   int64  `field:"createdAt"`   // When the channel was created.
+	UpdatedAt   int64  `field:"updatedAt"`   // When the channel was last updated.
 }
 
 // Mutable pointer to a version with complete version details.
@@ -258,6 +259,7 @@ type Channel struct {
 	Version     Version `field:"version"`     // Full version object this channel points to.
 	Description string  `field:"description"` // Human-readable description.
 	CreatedAt   int64   `field:"createdAt"`   // When the channel was created.
+	UpdatedAt   int64   `field:"updatedAt"`   // When the channel was last updated.
 }
 
 // Collection of channels with their current version targets.

@@ -12,6 +12,12 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
+const (
+
+	// Default file extension for zstd-compressed tar archives.
+	ArchiveFileExtension = ".tar.zst"
+)
+
 // Creates a zstd-compressed tar archive from a directory.
 //
 // The archive contains all files and directories under src with paths stored

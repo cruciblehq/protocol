@@ -1,8 +1,8 @@
 package codec
 
 import (
-	"bytes"
 	"encoding/json"
+	"io"
 
 	"github.com/BurntSushi/toml"
 	"github.com/cruciblehq/protocol/internal/helpers"
@@ -10,13 +10,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Encodes a value to the specified format.
+// Encodes a value to the specified format and writes it to w.
 //
 // The contentType specifies the output format. The key parameter specifies the
 // struct tag to use for field mapping. The v parameter is the value to be
-// encoded. The function returns the encoded data as a byte slice or an error
-// if encoding fails or if the content type is unsupported.
-func Encode(contentType ContentType, key string, v any) ([]byte, error) {
+// encoded. The function writes the encoded data to w or returns an error if
+// encoding fails or if the content type is unsupported.
+func Encode(w io.Writer, contentType ContentType, key string, v any) error {
 
 	// Struct to map
 	var raw map[string]any
@@ -25,82 +25,84 @@ func Encode(contentType ContentType, key string, v any) ([]byte, error) {
 		TagName: key,
 	})
 	if err != nil {
-		return nil, helpers.Wrap(ErrEncodingFailed, err)
+		return helpers.Wrap(ErrEncodingFailed, err)
 	}
 
 	// Decode
 	if err := decoder.Decode(v); err != nil {
-		return nil, helpers.Wrap(ErrEncodingFailed, err)
+		return helpers.Wrap(ErrEncodingFailed, err)
 	}
 
 	// Map to the target format
 	switch contentType {
 	case ContentTypeJSON:
-		return encodeJSON(raw)
+		return encodeJSON(w, raw)
 	case ContentTypeYAML:
-		return encodeYAML(raw)
+		return encodeYAML(w, raw)
 	case ContentTypeTOML:
-		return encodeTOML(raw)
+		return encodeTOML(w, raw)
 	default:
-		return nil, ErrUnsupportedContentType
+		return ErrUnsupportedContentType
 	}
 }
 
 // Encodes a value to JSON format.
-func encodeJSON(v any) ([]byte, error) {
-	data, err := json.Marshal(v)
-	if err != nil {
-		return nil, helpers.Wrap(ErrEncodingFailed, err)
+func encodeJSON(w io.Writer, v any) error {
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(v); err != nil {
+		return helpers.Wrap(ErrEncodingFailed, err)
 	}
-	return data, nil
+	return nil
 }
 
 // Encodes a value to YAML format.
-func encodeYAML(v any) ([]byte, error) {
-	data, err := yaml.Marshal(v)
-	if err != nil {
-		return nil, helpers.Wrap(ErrEncodingFailed, err)
+func encodeYAML(w io.Writer, v any) error {
+	encoder := yaml.NewEncoder(w)
+	if err := encoder.Encode(v); err != nil {
+		return helpers.Wrap(ErrEncodingFailed, err)
 	}
-	return data, nil
+	return nil
 }
 
 // Encodes a value to TOML format.
-func encodeTOML(v any) ([]byte, error) {
-	var buf bytes.Buffer
-	encoder := toml.NewEncoder(&buf)
+func encodeTOML(w io.Writer, v any) error {
+	encoder := toml.NewEncoder(w)
 	if err := encoder.Encode(v); err != nil {
-		return nil, helpers.Wrap(ErrEncodingFailed, err)
+		return helpers.Wrap(ErrEncodingFailed, err)
 	}
-	return buf.Bytes(), nil
+	return nil
 }
 
 // Decodes data in the specified format into the target.
 //
 // The contentType specifies the format of the input data. The key parameter
 // specifies the struct tag to use for field mapping. The target parameter is a
-// pointer to the structure where the decoded data should be stored. The data
-// parameter is the raw bytes to decode.
-func Decode(contentType ContentType, key string, target any, data []byte) error {
+// pointer to the structure where the decoded data should be stored. The r
+// parameter is the reader from which to read the data.
+func Decode(r io.Reader, contentType ContentType, key string, target any) error {
 	var raw map[string]any
 
 	switch contentType {
 	case ContentTypeJSON:
-		if err := json.Unmarshal(data, &raw); err != nil {
+		decoder := json.NewDecoder(r)
+		if err := decoder.Decode(&raw); err != nil {
 			return helpers.Wrap(ErrDecodingFailed, err)
 		}
 	case ContentTypeYAML:
-		if err := yaml.Unmarshal(data, &raw); err != nil {
+		decoder := yaml.NewDecoder(r)
+		if err := decoder.Decode(&raw); err != nil {
 			return helpers.Wrap(ErrDecodingFailed, err)
 		}
 	case ContentTypeTOML:
-		if err := toml.Unmarshal(data, &raw); err != nil {
+		decoder := toml.NewDecoder(r)
+		if _, err := decoder.Decode(&raw); err != nil {
 			return helpers.Wrap(ErrDecodingFailed, err)
 		}
 	default:
 		return ErrUnsupportedContentType
 	}
 
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+	mapDecoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		Result:  target,
 		TagName: key,
 	})
@@ -108,7 +110,7 @@ func Decode(contentType ContentType, key string, target any, data []byte) error 
 		return helpers.Wrap(ErrDecodingFailed, err)
 	}
 
-	if err := decoder.Decode(raw); err != nil {
+	if err := mapDecoder.Decode(raw); err != nil {
 		return helpers.Wrap(ErrDecodingFailed, err)
 	}
 

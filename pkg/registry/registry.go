@@ -8,9 +8,9 @@ import (
 // Interface for artifact registry operations.
 //
 // Provides hierarchical storage and retrieval of versioned artifacts organized
-// into namespaces and resources. Supports immutable published versions, mutable
-// version channels, and compressed archive distribution. All operations are
-// context-aware for cancellation and timeout control.
+// into namespaces and resources. Supports published (immutable) and unpublished
+// (mutable) versions, version channels, and compressed archive distribution.
+// All operations are context-aware for cancellation and timeout control.
 type Registry interface {
 
 	// Creates a new namespace.
@@ -46,8 +46,8 @@ type Registry interface {
 
 	// Lists all namespaces.
 	//
-	// Returns a list of all existing namespaces and an empty list if none exist.
-	// The list order is implementation-dependent.
+	// Returns a list of all existing namespaces and an empty list if none
+	// exist. The list order is implementation-dependent.
 	ListNamespaces(ctx context.Context) (*NamespaceList, error)
 
 	// Creates a new resource.
@@ -60,9 +60,9 @@ type Registry interface {
 
 	// Retrieves resource metadata with version and channel summaries.
 	//
-	// Returns resource information along with lightweight summaries of all versions
-	// and channels. Summaries exclude full archive details. If the namespace or
-	// resource does not exist, an error is returned.
+	// Returns resource information along with lightweight summaries of all
+	// versions and channels. Summaries exclude full archive details. If the
+	// namespace or resource does not exist, an error is returned.
 	ReadResource(ctx context.Context, namespace string, resource string) (*Resource, error)
 
 	// Updates mutable resource metadata.
@@ -79,16 +79,18 @@ type Registry interface {
 
 	// Lists all resources in a namespace.
 	//
-	// Returns a list of resource summaries including statistics and latest versions.
-	// The list is empty if the namespace contains no resources. If the namespace
-	// does not exist, an error is returned.
+	// Returns a list of resource summaries including statistics and latest
+	// versions. The order is implementation-dependent and the list is empty
+	// if the namespace contains no resources. If the namespace does not exist,
+	// an error is returned.
 	ListResources(ctx context.Context, namespace string) (*ResourceList, error)
 
 	// Creates a new version.
 	//
 	// If a version with the given string already exists, an error is returned.
-	// The response includes the created version's metadata. Archive fields remain
-	// null until an archive is uploaded and published.
+	// The response includes the created version's metadata. Archive fields
+	// remain null until an archive is uploaded. Versions are created in an
+	// unpublished state.
 	CreateVersion(ctx context.Context, namespace string, resource string, info VersionInfo) (*Version, error)
 
 	// Retrieves version metadata with archive details.
@@ -100,51 +102,60 @@ type Registry interface {
 
 	// Updates mutable version metadata.
 	//
-	// Immutable identifiers and archive state cannot be changed. Metadata updates
-	// are allowed even after publication. If the namespace, resource, or version
-	// does not exist, the operation fails.
+	// Only unpublished versions can be updated. Immutable identifiers cannot
+	// be changed. If the version does not exist or is published, the operation
+	// fails.
 	UpdateVersion(ctx context.Context, namespace string, resource string, version string, info VersionInfo) (*Version, error)
 
 	// Permanently deletes a version.
 	//
-	// Versions cannot be deleted if they are published. The operation is idempotent,
+	// Only unpublished versions can be deleted. The operation is idempotent,
 	// returning success if the version does not exist.
 	DeleteVersion(ctx context.Context, namespace string, resource string, version string) error
 
 	// Lists all versions for a resource.
 	//
-	// Returns a list of version summaries including publication status and timestamps.
-	// The list is empty if the resource has no versions. If the namespace or resource
-	// does not exist, an error is returned.
+	// Returns a list of version summaries including publication status and
+	// timestamps. The list is empty if the resource has no versions. If the
+	// namespace or resource does not exist, an error is returned.
 	ListVersions(ctx context.Context, namespace string, resource string) (*VersionList, error)
 
-	// Uploads and publishes a version archive.
+	// Uploads a version archive.
 	//
-	// Uploads the archive data and marks the version as published, making it
-	// immutable. The digest parameter is used for integrity verification. If the
-	// version is already published, an error is returned.
-	UploadArchive(ctx context.Context, namespace string, resource string, version string, digest string, archive io.Reader) (*Version, error)
+	// Uploads the archive data for a version. The archive can be replaced by
+	// uploading again. The digest is calculated from the archive data using
+	// SHA-256 for integrity verification. Returns the updated version with
+	// populated archive metadata.
+	UploadArchive(ctx context.Context, namespace string, resource string, version string, archive io.Reader) (*Version, error)
 
 	// Downloads a version archive.
 	//
-	// Returns a reader for the archive data. The caller is responsible for closing
-	// the reader. If the namespace, resource, or version does not exist, or if the
-	// version has no uploaded archive, an error is returned.
+	// Returns a reader for the archive data. The caller is responsible for
+	// closing the reader. If the namespace, resource, or version does not
+	// exist, or if the version has no uploaded archive, an error is returned.
 	DownloadArchive(ctx context.Context, namespace string, resource string, version string) (io.ReadCloser, error)
 
-	// Creates or updates a channel.
+	// Creates a new channel.
 	//
-	// Channel names follow the same constraints as namespace names. The referenced
-	// version must exist. If the channel does not exist, it is created; if it exists,
-	// it is updated. The response includes the channel's metadata with the full
-	// version object it points to.
-	SetChannel(ctx context.Context, namespace string, resource string, info ChannelInfo) (*Channel, error)
+	// Channel names follow the same constraints as namespace names. The
+	// referenced version must exist. Returns an error if a channel with the
+	// same name already exists. The response includes the channel's metadata
+	// with the full version object it points to.
+	CreateChannel(ctx context.Context, namespace string, resource string, info ChannelInfo) (*Channel, error)
+
+	// Updates a channel's mutable metadata.
+	//
+	// The target version and description can be modified. The channel name
+	// cannot be changed after creation. Returns an error if the channel does
+	// not exist. The response includes the updated channel's metadata with the
+	// full version object it points to.
+	UpdateChannel(ctx context.Context, namespace string, resource string, channel string, info ChannelInfo) (*Channel, error)
 
 	// Retrieves channel metadata with full version details.
 	//
-	// Returns channel information including the complete version object it currently
-	// points to, with all archive details. If the namespace, resource, or channel
-	// does not exist, an error is returned.
+	// Returns channel information including the complete version object it
+	// currently points to, with all archive details. If the namespace, resource,
+	// or channel does not exist, an error is returned.
 	ReadChannel(ctx context.Context, namespace string, resource string, channel string) (*Channel, error)
 
 	// Permanently deletes a channel.
@@ -154,16 +165,8 @@ type Registry interface {
 
 	// Lists all channels for a resource.
 	//
-	// Returns a list of channel summaries including current version targets and
-	// timestamps. The list is empty if the resource has no channels. If the namespace
-	// or resource does not exist, an error is returned.
+	// Returns a list of channel summaries including current version targets
+	// and timestamps. The list is empty if the resource has no channels. If
+	// the namespace or resource does not exist, an error is returned.
 	ListChannels(ctx context.Context, namespace string, resource string) (*ChannelList, error)
-
-	// Downloads a channel's current version archive.
-	//
-	// Returns a reader for the archive data of the version the channel currently
-	// points to. The caller is responsible for closing the reader. If the namespace,
-	// resource, or channel does not exist, or if the target version has no uploaded
-	// archive, an error is returned.
-	DownloadChannelArchive(ctx context.Context, namespace string, resource string, channel string) (io.ReadCloser, error)
 }

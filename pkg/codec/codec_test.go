@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"bytes"
 	"errors"
 	"strings"
 	"testing"
@@ -15,15 +16,16 @@ type testStruct struct {
 func TestEncode_JSON(t *testing.T) {
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	data, err := Encode(ContentTypeJSON, "key", v)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeJSON, "key", v); err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(data), `"name"`) {
+	data := buf.String()
+	if !strings.Contains(data, `"name"`) {
 		t.Error("expected JSON to contain 'name' key")
 	}
-	if !strings.Contains(string(data), `"test"`) {
+	if !strings.Contains(data, `"test"`) {
 		t.Error("expected JSON to contain 'test' value")
 	}
 }
@@ -31,12 +33,12 @@ func TestEncode_JSON(t *testing.T) {
 func TestEncode_YAML(t *testing.T) {
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	data, err := Encode(ContentTypeYAML, "key", v)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeYAML, "key", v); err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(data), "name:") {
+	if !strings.Contains(buf.String(), "name:") {
 		t.Error("expected YAML to contain 'name' key")
 	}
 }
@@ -44,12 +46,12 @@ func TestEncode_YAML(t *testing.T) {
 func TestEncode_TOML(t *testing.T) {
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	data, err := Encode(ContentTypeTOML, "key", v)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeTOML, "key", v); err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(data), "name =") {
+	if !strings.Contains(buf.String(), "name =") {
 		t.Error("expected TOML to contain 'name' key")
 	}
 }
@@ -57,7 +59,8 @@ func TestEncode_TOML(t *testing.T) {
 func TestEncode_UnsupportedContentType(t *testing.T) {
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	_, err := Encode(ContentTypeUnknown, "key", v)
+	var buf bytes.Buffer
+	err := Encode(&buf, ContentTypeUnknown, "key", v)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -74,21 +77,21 @@ func TestEncode_CustomTag(t *testing.T) {
 
 	v := customStruct{Name: "test"}
 
-	data, err := Encode(ContentTypeJSON, "custom", v)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeJSON, "custom", v); err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(data), `"custom_name"`) {
+	if !strings.Contains(buf.String(), `"custom_name"`) {
 		t.Error("expected JSON to contain 'custom_name' key")
 	}
 }
 
 func TestDecode_JSON(t *testing.T) {
-	data := []byte(`{"name":"test","version":1,"enabled":true}`)
+	data := `{"name":"test","version":1,"enabled":true}`
 
 	var target testStruct
-	if err := Decode(ContentTypeJSON, "key", &target, data); err != nil {
+	if err := Decode(strings.NewReader(data), ContentTypeJSON, "key", &target); err != nil {
 		t.Fatal(err)
 	}
 
@@ -104,10 +107,10 @@ func TestDecode_JSON(t *testing.T) {
 }
 
 func TestDecode_YAML(t *testing.T) {
-	data := []byte("name: test\nversion: 1\nenabled: true\n")
+	data := "name: test\nversion: 1\nenabled: true\n"
 
 	var target testStruct
-	if err := Decode(ContentTypeYAML, "key", &target, data); err != nil {
+	if err := Decode(strings.NewReader(data), ContentTypeYAML, "key", &target); err != nil {
 		t.Fatal(err)
 	}
 
@@ -123,10 +126,10 @@ func TestDecode_YAML(t *testing.T) {
 }
 
 func TestDecode_TOML(t *testing.T) {
-	data := []byte("name = \"test\"\nversion = 1\nenabled = true\n")
+	data := "name = \"test\"\nversion = 1\nenabled = true\n"
 
 	var target testStruct
-	if err := Decode(ContentTypeTOML, "key", &target, data); err != nil {
+	if err := Decode(strings.NewReader(data), ContentTypeTOML, "key", &target); err != nil {
 		t.Fatal(err)
 	}
 
@@ -142,10 +145,10 @@ func TestDecode_TOML(t *testing.T) {
 }
 
 func TestDecode_UnsupportedContentType(t *testing.T) {
-	data := []byte(`{"name":"test"}`)
+	data := `{"name":"test"}`
 
 	var target testStruct
-	err := Decode(ContentTypeUnknown, "key", &target, data)
+	err := Decode(strings.NewReader(data), ContentTypeUnknown, "key", &target)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -156,10 +159,10 @@ func TestDecode_UnsupportedContentType(t *testing.T) {
 }
 
 func TestDecode_InvalidJSON(t *testing.T) {
-	data := []byte(`{invalid}`)
+	data := `{invalid}`
 
 	var target testStruct
-	err := Decode(ContentTypeJSON, "key", &target, data)
+	err := Decode(strings.NewReader(data), ContentTypeJSON, "key", &target)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -170,10 +173,10 @@ func TestDecode_InvalidJSON(t *testing.T) {
 }
 
 func TestDecode_InvalidYAML(t *testing.T) {
-	data := []byte(":\ninvalid")
+	data := ":\ninvalid"
 
 	var target testStruct
-	err := Decode(ContentTypeYAML, "key", &target, data)
+	err := Decode(strings.NewReader(data), ContentTypeYAML, "key", &target)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -184,10 +187,10 @@ func TestDecode_InvalidYAML(t *testing.T) {
 }
 
 func TestDecode_InvalidTOML(t *testing.T) {
-	data := []byte("= invalid")
+	data := "= invalid"
 
 	var target testStruct
-	err := Decode(ContentTypeTOML, "key", &target, data)
+	err := Decode(strings.NewReader(data), ContentTypeTOML, "key", &target)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -202,10 +205,10 @@ func TestDecode_CustomTag(t *testing.T) {
 		Name string `custom:"custom_name"`
 	}
 
-	data := []byte(`{"custom_name":"test"}`)
+	data := `{"custom_name":"test"}`
 
 	var target customStruct
-	if err := Decode(ContentTypeJSON, "custom", &target, data); err != nil {
+	if err := Decode(strings.NewReader(data), ContentTypeJSON, "custom", &target); err != nil {
 		t.Fatal(err)
 	}
 
@@ -217,13 +220,13 @@ func TestDecode_CustomTag(t *testing.T) {
 func TestRoundtrip_JSON(t *testing.T) {
 	original := testStruct{Name: "test", Version: 42, Enabled: true}
 
-	data, err := Encode(ContentTypeJSON, "key", original)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeJSON, "key", original); err != nil {
 		t.Fatal(err)
 	}
 
 	var decoded testStruct
-	if err := Decode(ContentTypeJSON, "key", &decoded, data); err != nil {
+	if err := Decode(&buf, ContentTypeJSON, "key", &decoded); err != nil {
 		t.Fatal(err)
 	}
 
@@ -241,13 +244,13 @@ func TestRoundtrip_JSON(t *testing.T) {
 func TestRoundtrip_YAML(t *testing.T) {
 	original := testStruct{Name: "test", Version: 42, Enabled: true}
 
-	data, err := Encode(ContentTypeYAML, "key", original)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeYAML, "key", original); err != nil {
 		t.Fatal(err)
 	}
 
 	var decoded testStruct
-	if err := Decode(ContentTypeYAML, "key", &decoded, data); err != nil {
+	if err := Decode(&buf, ContentTypeYAML, "key", &decoded); err != nil {
 		t.Fatal(err)
 	}
 
@@ -265,13 +268,13 @@ func TestRoundtrip_YAML(t *testing.T) {
 func TestRoundtrip_TOML(t *testing.T) {
 	original := testStruct{Name: "test", Version: 42, Enabled: true}
 
-	data, err := Encode(ContentTypeTOML, "key", original)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := Encode(&buf, ContentTypeTOML, "key", original); err != nil {
 		t.Fatal(err)
 	}
 
 	var decoded testStruct
-	if err := Decode(ContentTypeTOML, "key", &decoded, data); err != nil {
+	if err := Decode(&buf, ContentTypeTOML, "key", &decoded); err != nil {
 		t.Fatal(err)
 	}
 

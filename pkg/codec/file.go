@@ -18,13 +18,14 @@ func EncodeFile(path, key string, v any) error {
 		return err
 	}
 
-	data, err := Encode(ct, key, v)
+	f, err := os.Create(path)
 	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("%w: %v", ErrEncodingFailed, err)
+	}
+	defer f.Close()
+
+	if err := Encode(f, ct, key, v); err != nil {
+		return err
 	}
 
 	return nil
@@ -42,12 +43,13 @@ func DecodeFile(path, key string, target any) (ContentType, error) {
 		return ContentTypeUnknown, err
 	}
 
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return ContentTypeUnknown, fmt.Errorf("%w: %v", ErrDecodingFailed, err)
 	}
+	defer f.Close()
 
-	return ct, Decode(ct, key, target, data)
+	return ct, Decode(f, ct, key, target)
 }
 
 // Returns the content type for the file extension.
