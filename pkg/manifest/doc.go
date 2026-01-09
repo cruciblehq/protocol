@@ -1,7 +1,7 @@
 // Package manifest defines the structure and parsing logic for resource manifests.
 //
 // A manifest describes a Crucible resource and its configuration. Manifests are
-// YAML files located at .cruciblerc/manifest.yaml within a resource directory.
+// YAML files named crucible.yaml at the root of a resource directory.
 // Use [Read] to load and parse a manifest:
 //
 //	m, err := manifest.Read("/path/to/resource")

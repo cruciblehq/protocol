@@ -12,7 +12,7 @@ import (
 const (
 
 	// The path of the manifest file within a Crucible resource project.
-	Manifestfile = ".cruciblerc/manifest.yaml"
+	Manifestfile = "crucible.yaml"
 )
 
 // Loads and parses a manifest file.
