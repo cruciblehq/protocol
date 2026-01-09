@@ -9,7 +9,6 @@ type Service struct {
 
 	// Holds build-related configuration for service resources.
 	Build struct {
-		Main string            `field:"main"` // Build entry point (e.g., Dockerfile).
-		Args map[string]string `field:"args"` // Build arguments (ARG in Dockerfile).
+		Image string `field:"image"` // Path to pre-built OCI image tarball (e.g., "dist/image.tar").
 	} `field:"build"`
 }
