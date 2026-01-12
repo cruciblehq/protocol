@@ -4,7 +4,7 @@
 // YAML files named crucible.yaml at the root of a resource directory.
 // Use [Read] to load and parse a manifest:
 //
-//	m, err := manifest.Read("/path/to/resource")
+//	m, err := manifest.Read("/path/to/resource/crucible.yaml")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}

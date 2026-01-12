@@ -144,6 +144,59 @@ func TestDecode_TOML(t *testing.T) {
 	}
 }
 
+func TestDecodeMap(t *testing.T) {
+	raw := map[string]any{
+		"name":    "test",
+		"version": 1,
+		"enabled": true,
+	}
+
+	var target testStruct
+	if err := DecodeMap(raw, "key", &target); err != nil {
+		t.Fatal(err)
+	}
+
+	if target.Name != "test" {
+		t.Errorf("expected name %q, got %q", "test", target.Name)
+	}
+	if target.Version != 1 {
+		t.Errorf("expected version %d, got %d", 1, target.Version)
+	}
+	if !target.Enabled {
+		t.Error("expected enabled to be true")
+	}
+}
+
+func TestDecodeMap_NestedStruct(t *testing.T) {
+	type Inner struct {
+		Value string `field:"inner_value"`
+	}
+
+	type Outer struct {
+		Title string `field:"title"`
+		Data  Inner  `field:"data"`
+	}
+
+	raw := map[string]any{
+		"title": "test",
+		"data": map[string]any{
+			"inner_value": "nested",
+		},
+	}
+
+	var target Outer
+	if err := DecodeMap(raw, "field", &target); err != nil {
+		t.Fatal(err)
+	}
+
+	if target.Title != "test" {
+		t.Errorf("expected title %q, got %q", "test", target.Title)
+	}
+	if target.Data.Value != "nested" {
+		t.Errorf("expected inner value %q, got %q", "nested", target.Data.Value)
+	}
+}
+
 func TestDecode_UnsupportedContentType(t *testing.T) {
 	data := `{"name":"test"}`
 

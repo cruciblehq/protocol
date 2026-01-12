@@ -116,3 +116,26 @@ func Decode(r io.Reader, contentType ContentType, key string, target any) error 
 
 	return nil
 }
+
+// Decodes a raw map into the target structure.
+//
+// The raw parameter is a map representing unmarshaled content. The key
+// parameter specifies the struct tag to use for field mapping. The target
+// parameter is a pointer to the structure where the decoded data should be
+// stored. This is useful when you already have a map and need to decode it
+// into a struct with custom field tags.
+func DecodeMap(raw map[string]any, key string, target any) error {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:  target,
+		TagName: key,
+	})
+	if err != nil {
+		return helpers.Wrap(ErrDecodingFailed, err)
+	}
+
+	if err := decoder.Decode(raw); err != nil {
+		return helpers.Wrap(ErrDecodingFailed, err)
+	}
+
+	return nil
+}
