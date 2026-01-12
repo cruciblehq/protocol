@@ -2,7 +2,7 @@ package manifest
 
 const (
 
-	// Distribution directory for widget build output.
+	// Distribution directory for widget build output
 	WidgetDistDirectory = "dist"
 
 	// Distribution file for widget build output.

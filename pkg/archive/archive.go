@@ -294,3 +294,27 @@ func extractFile(r io.Reader, target string) error {
 
 	return nil
 }
+
+// FindInTar finds and reads a file from a tar archive.
+//
+// Returns nil if the file is not found. The tar reader is consumed
+// up to and including the found file.
+func FindInTar(tr *tar.Reader, filename string) ([]byte, error) {
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if header.Name == filename {
+			data, err := io.ReadAll(tr)
+			if err != nil {
+				return nil, err
+			}
+			return data, nil
+		}
+	}
+}
