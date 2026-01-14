@@ -101,13 +101,20 @@ Artifact registry implementation with hierarchical storage for versioned
 resources. Provides a complete registry interface with namespace, resource,
 version, and channel management.
 
+The package includes two implementations:
+
+- **SQLRegistry**: Local registry backed by SQLite
+- **Client**: Remote registry accessed via HTTP
+
+#### Local Registry (SQLRegistry)
+
 ```go
 import (
     "github.com/cruciblehq/protocol/pkg/registry"
     "database/sql"
 )
 
-// Create a new registry
+// Create a new local registry
 db, _ := sql.Open("sqlite3", "registry.db?_foreign_keys=on")
 reg, err := registry.NewSQLRegistry(db, "/path/to/archives", logger)
 
@@ -144,6 +151,46 @@ ch, err := reg.CreateChannel(ctx, "myorg", "mywidget", registry.ChannelInfo{
 // Download archive
 reader, err := reg.DownloadArchive(ctx, "myorg", "mywidget", "1.0.0")
 defer reader.Close()
+```
+
+#### Remote Registry (Client)
+
+```go
+import "github.com/cruciblehq/protocol/pkg/registry"
+
+// Create a client for a remote registry
+client, err := registry.NewClient("https://hub.example.com", nil)
+
+// Client implements the same Registry interface
+ns, err := client.CreateNamespace(ctx, registry.NamespaceInfo{
+    Name:        "myorg",
+    Description: "My organization",
+})
+
+// List resources
+resources, err := client.ListResources(ctx, "myorg")
+
+// Read specific version
+ver, err := client.ReadVersion(ctx, "myorg", "mywidget", "1.0.0")
+
+// Upload archive to remote registry
+file, _ := os.Open("widget.tar.zst")
+defer file.Close()
+ver, err = client.UploadArchive(ctx, "myorg", "mywidget", "1.0.0", file)
+
+// Download from remote registry
+reader, err := client.DownloadArchive(ctx, "myorg", "mywidget", "1.0.0")
+defer reader.Close()
+
+// Handle errors
+_, err = client.ReadNamespace(ctx, "nonexistent")
+if err != nil {
+    if registryErr, ok := err.(*registry.Error); ok {
+        if registryErr.Code == registry.ErrorCodeNotFound {
+            // Handle not found
+        }
+    }
+}
 ```
 
 ## Installation
