@@ -88,7 +88,7 @@ func (vc *VersionConstraint) MatchesVersion(v *Version) (bool, error) {
 func ParseVersionConstraint(s string) (*VersionConstraint, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return nil, fmt.Errorf("%w: empty version constraint", ErrInvalidReference)
+		return nil, helpers.Wrap(ErrInvalidReference, ErrEmptyConstraint)
 	}
 
 	vc := &VersionConstraint{}
@@ -97,7 +97,7 @@ func ParseVersionConstraint(s string) (*VersionConstraint, error) {
 	for i, orPart := range orParts {
 		orPart = strings.TrimSpace(orPart)
 		if orPart == "" {
-			return nil, fmt.Errorf("%w: empty version constraint in OR expression at position %d", ErrInvalidReference, i)
+			return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("empty version constraint in OR expression at position %d", i))
 		}
 
 		group, err := parseConstraintGroup(orPart)
@@ -108,7 +108,7 @@ func ParseVersionConstraint(s string) (*VersionConstraint, error) {
 	}
 
 	if len(vc.constraints) == 0 {
-		return nil, fmt.Errorf("%w: no valid version constraints", ErrInvalidReference)
+		return nil, helpers.Wrap(ErrInvalidReference, ErrEmptyConstraint)
 	}
 
 	return vc, nil
@@ -122,7 +122,7 @@ func ParseVersionConstraint(s string) (*VersionConstraint, error) {
 func parseConstraintGroup(s string) (constraintGroup, error) {
 	tokens := strings.Fields(s)
 	if len(tokens) == 0 {
-		return constraintGroup{}, fmt.Errorf("%w: empty version constraint group", ErrInvalidReference)
+		return constraintGroup{}, helpers.Wrap(ErrInvalidReference, ErrEmptyConstraintGroup)
 	}
 
 	constraints, err := parseTokens(tokens)
@@ -165,12 +165,12 @@ func parseTokens(tokens []string) ([]constraint, error) {
 		if i+2 < len(tokens) && isHyphenOperator(tokens[i+1]) {
 			lower, err := parseRangeBound(">=", tokens[i])
 			if err != nil {
-				return nil, fmt.Errorf("%w: invalid version lower bound %q", ErrInvalidReference, tokens[i])
+				return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid version lower bound %q", tokens[i]))
 			}
 
 			upper, err := parseRangeBound("<=", tokens[i+2])
 			if err != nil {
-				return nil, fmt.Errorf("%w: invalid version upper bound %q", ErrInvalidReference, tokens[i+2])
+				return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid version upper bound %q", tokens[i+2]))
 			}
 
 			constraints = append(constraints, lower, upper)
@@ -200,23 +200,23 @@ func validateHyphenPositions(tokens []string) error {
 		}
 
 		if i == 0 {
-			return fmt.Errorf("%w: hyphen range missing version lower bound", ErrInvalidReference)
+			return helpers.Wrap(ErrInvalidReference, ErrLeadingHyphen)
 		}
 
 		if i == len(tokens)-1 {
-			return fmt.Errorf("%w: hyphen range missing version upper bound", ErrInvalidReference)
+			return helpers.Wrap(ErrInvalidReference, ErrTrailingHyphen)
 		}
 
 		if isHyphenOperator(tokens[i-1]) || isHyphenOperator(tokens[i+1]) {
-			return fmt.Errorf("%w: consecutive hyphens in version range", ErrInvalidReference)
+			return helpers.Wrap(ErrInvalidReference, ErrConsecutiveHyphens)
 		}
 
 		if startsWithOperator(tokens[i-1]) {
-			return fmt.Errorf("%w: hyphen range lower bound cannot have operator", ErrInvalidReference)
+			return helpers.Wrap(ErrInvalidReference, ErrHyphenWithOperator)
 		}
 
 		if startsWithOperator(tokens[i+1]) {
-			return fmt.Errorf("%w: hyphen range upper bound cannot have operator", ErrInvalidReference)
+			return helpers.Wrap(ErrInvalidReference, ErrHyphenWithOperator)
 		}
 	}
 
@@ -241,11 +241,11 @@ func startsWithOperator(s string) bool {
 // allowed in range bounds.
 func parseRangeBound(op, version string) (constraint, error) {
 	if startsWithOperator(version) {
-		return constraint{}, fmt.Errorf("%w: range bound cannot have operator", ErrInvalidReference)
+		return constraint{}, helpers.Wrap(ErrInvalidReference, ErrRangeBoundWithOperator)
 	}
 
 	if strings.Contains(version, "x") || strings.Contains(version, "X") {
-		return constraint{}, fmt.Errorf("%w: wildcards not allowed in range bounds", ErrInvalidReference)
+		return constraint{}, helpers.Wrap(ErrInvalidReference, ErrRangeBoundWithWildcard)
 	}
 
 	return parseSingleConstraint(op, version)
@@ -257,7 +257,7 @@ func parseRangeBound(op, version string) (constraint, error) {
 // wildcard versions (1.x, 1.2.x). Bare wildcards (*) are not allowed.
 func parseConstraint(s string) (constraint, error) {
 	if s == "*" {
-		return constraint{}, fmt.Errorf("%w: wildcard (*) not allowed", ErrInvalidReference)
+		return constraint{}, helpers.Wrap(ErrInvalidReference, ErrBareWildcard)
 	}
 
 	// Handle x wildcards
@@ -268,7 +268,7 @@ func parseConstraint(s string) (constraint, error) {
 	// Extract operator
 	match := operatorPattern.FindStringSubmatch(s)
 	if match == nil {
-		return constraint{}, fmt.Errorf("%w: cannot parse version constraint %q", ErrInvalidReference, s)
+		return constraint{}, helpers.Wrap(ErrInvalidReference, ErrInvalidConstraintOperator)
 	}
 
 	op := match[1]
@@ -294,19 +294,19 @@ func parseSingleConstraint(op, version string) (constraint, error) {
 
 	match := versionPattern.FindStringSubmatch(version)
 	if match == nil {
-		return c, fmt.Errorf("%w: invalid version constraint format %q", ErrInvalidReference, version)
+		return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid version format %q", version))
 	}
 
 	major, err := strconv.Atoi(match[1])
 	if err != nil {
-		return c, fmt.Errorf("%w: invalid major version %q", ErrInvalidReference, match[1])
+		return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid major version %q", match[1]))
 	}
 	c.major = major
 
 	if match[2] != "" {
 		minor, err := strconv.Atoi(match[2])
 		if err != nil {
-			return c, fmt.Errorf("%w: invalid minor version %q", ErrInvalidReference, match[2])
+			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid minor version %q", match[2]))
 		}
 		c.minor = minor
 		c.minorSet = true
@@ -315,14 +315,14 @@ func parseSingleConstraint(op, version string) (constraint, error) {
 	if match[3] != "" {
 		patch, err := strconv.Atoi(match[3])
 		if err != nil {
-			return c, fmt.Errorf("%w: invalid patch version %q", ErrInvalidReference, match[3])
+			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid patch version %q", match[3]))
 		}
 		c.patch = patch
 		c.patchSet = true
 	}
 
 	if match[4] != "" {
-		return c, fmt.Errorf("%w: prerelease versions not allowed in version constraints", ErrInvalidReference)
+		return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("prerelease in constraint %q", match[4]))
 	}
 
 	return c, nil
@@ -337,14 +337,14 @@ func parseSingleConstraint(op, version string) (constraint, error) {
 func validateWildcardFormat(s string) error {
 
 	if s == "" || s == "x" || s == "X" {
-		return fmt.Errorf("%w: wildcard without version not allowed", ErrInvalidReference)
+		return helpers.Wrap(ErrInvalidReference, ErrBareWildcard)
 	}
 
 	xCount := strings.Count(s, ".x") + strings.Count(s, ".X")
 	dotCount := strings.Count(s, ".")
 
 	if xCount > 1 || (xCount == 1 && dotCount > 2) {
-		return fmt.Errorf("%w: invalid version wildcard format %q", ErrInvalidReference, s)
+		return helpers.Wrap(ErrInvalidReference, ErrMultipleWildcards)
 	}
 
 	return nil
@@ -361,7 +361,7 @@ func parseWildcard(s string) (constraint, error) {
 	if len(s) > 0 {
 		switch s[0] {
 		case '>', '<', '!', '~', '^':
-			return constraint{}, fmt.Errorf("%w: operators not allowed with wildcards", ErrInvalidReference)
+			return constraint{}, helpers.Wrap(ErrInvalidReference, ErrWildcardWithOperator)
 		case '=':
 			s = s[1:] // Strip explicit = prefix
 		}
@@ -383,7 +383,7 @@ func parseWildcard(s string) (constraint, error) {
 	if len(parts) >= 1 && parts[0] != "" {
 		major, err := strconv.Atoi(parts[0])
 		if err != nil {
-			return c, fmt.Errorf("%w: invalid major version", ErrInvalidReference)
+			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid major version %q", parts[0]))
 		}
 		c.major = major
 	}
@@ -391,7 +391,7 @@ func parseWildcard(s string) (constraint, error) {
 	if len(parts) >= 2 && parts[1] != "" {
 		minor, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return c, fmt.Errorf("%w: invalid minor version", ErrInvalidReference)
+			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid minor version %q", parts[1]))
 		}
 		c.minor = minor
 		c.minorSet = true
@@ -442,7 +442,7 @@ func validateConstraintGroup(g constraintGroup) error {
 	}
 
 	if needsUpper && !hasUpper {
-		return fmt.Errorf("%w: unbounded range requires explicit upper bound", ErrInvalidReference)
+		return helpers.Wrap(ErrInvalidReference, ErrMissingUpperBound)
 	}
 
 	return nil

@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 // Represents a parsed semantic version.
@@ -44,7 +46,7 @@ func ParseVersion(version string) (*Version, error) {
 		s = s[:idx]
 
 		if v.Build == "" || !buildPattern.MatchString(v.Build) {
-			return nil, fmt.Errorf("%w: invalid build metadata %q", ErrInvalidReference, version)
+			return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid build metadata %q", version))
 		}
 	}
 
@@ -54,27 +56,27 @@ func ParseVersion(version string) (*Version, error) {
 		s = s[:idx]
 
 		if !prereleasePattern.MatchString(v.Prerelease) {
-			return nil, fmt.Errorf("%w: prerelease must be identifier.number (e.g., alpha.1): %q", ErrInvalidReference, version)
+			return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("prerelease must be identifier.number (e.g., alpha.1): %q", version))
 		}
 	}
 
 	// Parse version numbers
 	parts := strings.Split(s, ".")
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("%w: version must have major.minor.patch format: %q", ErrInvalidReference, version)
+		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("version must have major.minor.patch format: %q", version))
 	}
 
 	var err error
 	if v.Major, err = strconv.Atoi(parts[0]); err != nil || v.Major < 0 {
-		return nil, fmt.Errorf("%w: invalid major version %q", ErrInvalidReference, version)
+		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid major version %q", version))
 	}
 
 	if v.Minor, err = strconv.Atoi(parts[1]); err != nil || v.Minor < 0 {
-		return nil, fmt.Errorf("%w: invalid minor version %q", ErrInvalidReference, version)
+		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid minor version %q", version))
 	}
 
 	if v.Patch, err = strconv.Atoi(parts[2]); err != nil || v.Patch < 0 {
-		return nil, fmt.Errorf("%w: invalid patch version %q", ErrInvalidReference, version)
+		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid patch version %q", version))
 	}
 
 	return v, nil

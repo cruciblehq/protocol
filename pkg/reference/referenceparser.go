@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 var (
@@ -28,7 +30,7 @@ func (p *referenceParser) parse(contextType string) (*Reference, error) {
 	// Find where the identifier ends and version/channel begins
 	idEnd := p.findIdentifierEnd()
 	if idEnd == 0 {
-		return nil, fmt.Errorf("%w: empty reference", ErrInvalidReference)
+		return nil, helpers.Wrap(ErrInvalidReference, ErrEmptyReference)
 	}
 
 	// Parse the identifier portion
@@ -58,7 +60,7 @@ func (p *referenceParser) parse(contextType string) (*Reference, error) {
 	}
 
 	if tok, ok := p.peek(); ok {
-		return nil, fmt.Errorf("%w: unexpected token %q", ErrInvalidReference, tok)
+		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("unexpected token %q", tok))
 	}
 
 	return ref, nil
@@ -108,7 +110,7 @@ func (p *referenceParser) remaining() int {
 func (p *referenceParser) parseVersionOrChannel(ref *Reference) error {
 	tok, ok := p.peek()
 	if !ok {
-		return fmt.Errorf("%w: missing version or channel", ErrInvalidReference)
+		return helpers.Wrap(ErrInvalidReference, ErrMissingVersionChannel)
 	}
 
 	// Check for channel
@@ -131,7 +133,7 @@ func (p *referenceParser) parseVersionOrChannel(ref *Reference) error {
 	}
 
 	if len(versionTokens) == 0 {
-		return fmt.Errorf("%w: missing version or channel", ErrInvalidReference)
+		return helpers.Wrap(ErrInvalidReference, ErrMissingVersionChannel)
 	}
 
 	versionStr := strings.Join(versionTokens, " ")

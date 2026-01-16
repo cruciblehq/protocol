@@ -192,10 +192,7 @@ func ValidateMultiPlatform(imagePath string) error {
 		for p := range platforms {
 			supported = append(supported, p)
 		}
-		return helpers.Wrap(ErrSinglePlatform, fmt.Errorf(
-			"image missing required platforms %v (has %v)",
-			missing, supported,
-		))
+		return ErrSinglePlatform
 	}
 
 	return nil

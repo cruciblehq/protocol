@@ -1,10 +1,11 @@
 package codec
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 // Encodes a value to a file.
@@ -20,7 +21,7 @@ func EncodeFile(path, key string, v any) error {
 
 	f, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrEncodingFailed, err)
+		return helpers.Wrap(ErrEncodingFailed, err)
 	}
 	defer f.Close()
 
@@ -45,7 +46,7 @@ func DecodeFile(path, key string, target any) (ContentType, error) {
 
 	f, err := os.Open(path)
 	if err != nil {
-		return ContentTypeUnknown, fmt.Errorf("%w: %v", ErrDecodingFailed, err)
+		return ContentTypeUnknown, helpers.Wrap(ErrDecodingFailed, err)
 	}
 	defer f.Close()
 
@@ -63,6 +64,6 @@ func contentTypeFromExtension(path string) (ContentType, error) {
 	case ".toml":
 		return ContentTypeTOML, nil
 	default:
-		return ContentTypeUnknown, fmt.Errorf("%w: unknown extension %q", ErrUnsupportedContentType, ext)
+		return ContentTypeUnknown, ErrUnsupportedContentType
 	}
 }

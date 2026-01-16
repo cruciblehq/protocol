@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 var (
@@ -35,11 +37,11 @@ type identifierParser struct {
 // Parses the tokens into an Identifier.
 func (p *identifierParser) parse(contextType string) (*Identifier, error) {
 	if !typePattern.MatchString(contextType) {
-		return nil, fmt.Errorf("%w: invalid type context %q", ErrInvalidIdentifier, contextType)
+		return nil, helpers.Wrap(ErrInvalidIdentifier, ErrInvalidContextType)
 	}
 
 	if len(p.tokens) == 0 {
-		return nil, fmt.Errorf("%w: empty identifier", ErrInvalidIdentifier)
+		return nil, helpers.Wrap(ErrInvalidIdentifier, ErrEmptyIdentifier)
 	}
 
 	id := &Identifier{
@@ -56,7 +58,7 @@ func (p *identifierParser) parse(contextType string) (*Identifier, error) {
 	}
 
 	if tok, ok := p.peek(); ok {
-		return nil, fmt.Errorf("%w: unexpected token %q", ErrInvalidIdentifier, tok)
+		return nil, helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("unexpected token %q", tok))
 	}
 
 	return id, nil
@@ -101,7 +103,7 @@ func (p *identifierParser) parseType(id *Identifier, contextType string) error {
 
 	// Token is a type; must match context.
 	if tok != contextType {
-		return fmt.Errorf("%w: type %q does not match context %q", ErrTypeMismatch, tok, contextType)
+		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("type %q does not match context %q", tok, contextType))
 	}
 	p.pos++
 
@@ -112,7 +114,7 @@ func (p *identifierParser) parseType(id *Identifier, contextType string) error {
 func (p *identifierParser) parseLocation(id *Identifier) error {
 	tok, ok := p.next()
 	if !ok {
-		return fmt.Errorf("%w: missing resource location", ErrInvalidIdentifier)
+		return helpers.Wrap(ErrInvalidIdentifier, ErrEmptyIdentifier)
 	}
 
 	// Full URI: scheme://registry/path
@@ -132,20 +134,23 @@ func (p *identifierParser) parseLocation(id *Identifier) error {
 // Parses a full URI (scheme://registry/path).
 func (p *identifierParser) parseURI(id *Identifier, scheme, rest string) error {
 	if !schemePattern.MatchString(scheme) {
-		return fmt.Errorf("%w: invalid scheme %q", ErrInvalidIdentifier, scheme)
+		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid scheme %q", scheme))
 	}
 
 	registry, path, ok := strings.Cut(rest, "/")
 	if !ok || registry == "" || path == "" {
-		return fmt.Errorf("%w: invalid URI", ErrInvalidIdentifier)
+		if !ok || registry == "" {
+			return helpers.Wrap(ErrInvalidIdentifier, ErrMissingRegistry)
+		}
+		return helpers.Wrap(ErrInvalidIdentifier, ErrMissingPath)
 	}
 
 	if !registryPattern.MatchString(registry) {
-		return fmt.Errorf("%w: invalid registry %q", ErrInvalidIdentifier, registry)
+		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid registry %q", registry))
 	}
 
 	if !pathPattern.MatchString(path) {
-		return fmt.Errorf("%w: invalid path %q", ErrInvalidIdentifier, path)
+		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid path %q", path))
 	}
 
 	id.scheme = scheme
@@ -158,15 +163,15 @@ func (p *identifierParser) parseURI(id *Identifier, scheme, rest string) error {
 // Parses a registry/path combination without scheme.
 func (p *identifierParser) parseRegistryPath(id *Identifier, registry, path string) error {
 	if !registryPattern.MatchString(registry) {
-		return fmt.Errorf("%w: invalid registry %q", ErrInvalidIdentifier, registry)
+		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid registry %q", registry))
 	}
 
 	if path == "" {
-		return fmt.Errorf("%w: empty path", ErrInvalidIdentifier)
+		return helpers.Wrap(ErrInvalidIdentifier, ErrEmptyPath)
 	}
 
 	if !pathPattern.MatchString(path) {
-		return fmt.Errorf("%w: invalid path %q", ErrInvalidIdentifier, path)
+		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid path %q", path))
 	}
 
 	id.scheme = p.options.scheme()
@@ -183,16 +188,16 @@ func (p *identifierParser) parseDefaultPath(id *Identifier, tok string) error {
 
 	if namespace, name, ok := strings.Cut(tok, "/"); ok {
 		if !namePattern.MatchString(namespace) {
-			return fmt.Errorf("%w: invalid namespace %q", ErrInvalidIdentifier, namespace)
+			return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid namespace %q", namespace))
 		}
 		if !namePattern.MatchString(name) {
-			return fmt.Errorf("%w: invalid name %q", ErrInvalidIdentifier, name)
+			return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid name %q", name))
 		}
 		id.namespace = namespace
 		id.name = name
 	} else {
 		if !namePattern.MatchString(tok) {
-			return fmt.Errorf("%w: invalid name %q", ErrInvalidIdentifier, tok)
+			return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid name %q", tok))
 		}
 		id.namespace = p.options.namespace()
 		id.name = tok

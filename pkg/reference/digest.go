@@ -1,8 +1,9 @@
 package reference
 
 import (
-	"fmt"
 	"strings"
+
+	"github.com/cruciblehq/protocol/internal/helpers"
 )
 
 // Content-addressable digest for resource verification.
@@ -27,18 +28,18 @@ func ParseDigest(s string) (*Digest, error) {
 
 	colonIdx := strings.Index(s, ":")
 	if colonIdx == -1 {
-		return nil, fmt.Errorf("%w: missing digest algorithm prefix", ErrInvalidDigest)
+		return nil, helpers.Wrap(ErrInvalidDigest, ErrMissingDigestColon)
 	}
 
 	algorithm := strings.ToLower(s[:colonIdx])
 	hash := strings.ToLower(s[colonIdx+1:])
 
 	if algorithm == "" {
-		return nil, fmt.Errorf("%w: empty digest algorithm", ErrInvalidDigest)
+		return nil, helpers.Wrap(ErrInvalidDigest, ErrEmptyDigestAlgorithm)
 	}
 
 	if hash == "" {
-		return nil, fmt.Errorf("%w: empty digest hash", ErrInvalidDigest)
+		return nil, helpers.Wrap(ErrInvalidDigest, ErrEmptyDigestHash)
 	}
 
 	return &Digest{
