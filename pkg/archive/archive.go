@@ -16,19 +16,28 @@ const (
 
 	// Default file extension for zstd-compressed tar archives.
 	ArchiveFileExtension = ".tar.zst"
+
+	// Permission mode used when creating directories.
+	//
+	// This mode is required when handling resource extraction and storage and
+	// optional for other purposes.
+	DirMode os.FileMode = 0755
+
+	// Permission mode used when creating files.
+	//
+	// This mode is required when handling resource extraction and storage and
+	// optional for other purposes.
+	FileMode os.FileMode = 0644
 )
 
 // Creates a zstd-compressed tar archive from a directory.
 //
 // The archive contains all files and directories under src with paths stored
 // relative to src. Paths in the archive use forward slashes regardless of the
-// host operating system.
-//
-// Only regular files and directories are allowed. Symlinks and other special
-// file types such as devices and sockets will cause the function to return
-// [ErrUnsupportedFileType].
-//
-// If creation fails, the partially written archive is removed.
+// host operating system. Only regular files and directories are allowed.
+// Symlinks and other special file types such as devices and sockets will cause
+// the function to return [ErrUnsupportedFileType]. If creation fails, the
+// partially written archive is removed.
 func Create(src, dest string) (err error) {
 	file, err := os.Create(dest)
 	if err != nil {
@@ -62,12 +71,10 @@ func Create(src, dest string) (err error) {
 //
 // Files are extracted with [paths.DefaultFileMode] and directories with
 // [paths.DefaultDirMode]. Returns [ErrDestinationExists] if dest already exists.
-//
 // Only regular files and directories are allowed. Symlinks and other special
 // file types return [ErrUnsupportedFileType]. Absolute paths and path traversal
-// attempts (e.g., "../etc/passwd") return [ErrInvalidPath].
-//
-// If extraction fails, the destination directory and its contents are removed.
+// attempts (e.g., "../etc/passwd") return [ErrInvalidPath]. If extraction fails,
+// the destination directory and its contents are removed.
 func Extract(src, dest string) error {
 	file, err := os.Open(src)
 	if err != nil {

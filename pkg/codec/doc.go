@@ -21,13 +21,6 @@
 // use for field mapping (e.g., "field", "json", "yaml"). This allows a single
 // struct to support multiple serialization strategies.
 //
-// Supported file extensions:
-//   - JSON: .json
-//   - YAML: .yaml, .yml
-//   - TOML: .toml
-//
-// Examples:
-//
 // Working with domain types:
 //
 //	ns := types.Namespace{
@@ -60,13 +53,4 @@
 //	// File operations with automatic format detection
 //	err = types.EncodeFile("config.yaml", "field", cfg)
 //	ct, err := types.DecodeFile("config.yaml", "field", &decoded)
-//
-// The package defines sentinel errors for common failure modes:
-//   - [ErrInvalidContentType]: Invalid MIME type string
-//   - [ErrUnsupportedContentType]: Content type not supported
-//   - [ErrEncodingFailed]: Serialization failure
-//   - [ErrDecodingFailed]: Deserialization failure
-//
-// These errors are wrapped with additional context using the crex package
-// error conventions.
 package codec

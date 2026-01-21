@@ -7,7 +7,7 @@ import (
 
 // Represents a content serialization type.
 //
-// ContentType defines the serialization format used for encoding and decoding
+// ContentType is the serialization format used for encoding and decoding
 // data structures. Supported content types include [ContentTypeJSON],
 // [ContentTypeYAML], and [ContentTypeTOML].
 type ContentType int

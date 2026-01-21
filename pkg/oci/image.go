@@ -21,15 +21,6 @@ const (
 	OCIBlobsSHA256Dir = "blobs/sha256"
 )
 
-var (
-
-	// ErrInvalidImage indicates the OCI image is malformed or corrupted.
-	ErrInvalidImage = errors.New("invalid OCI image")
-
-	// ErrSinglePlatform indicates the image only supports a single platform.
-	ErrSinglePlatform = errors.New("single-platform image")
-)
-
 // Represents an OCI Image Index structure.
 type Index struct {
 	SchemaVersion int          `json:"schemaVersion"` // OCI image index schema version

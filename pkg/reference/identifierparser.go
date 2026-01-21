@@ -103,7 +103,7 @@ func (p *identifierParser) parseType(id *Identifier, contextType string) error {
 
 	// Token is a type; must match context.
 	if tok != contextType {
-		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("type %q does not match context %q", tok, contextType))
+		return helpers.Wrap(ErrTypeMismatch, fmt.Errorf("type %q does not match context %q", tok, contextType))
 	}
 	p.pos++
 
