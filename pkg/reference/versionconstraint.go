@@ -1,7 +1,6 @@
 package reference
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -72,6 +71,46 @@ func (vc *VersionConstraint) MatchesVersion(v *Version) (bool, error) {
 	return false, nil
 }
 
+// Intersects this constraint with another, returning a new constraint that
+// matches only versions satisfying both.
+//
+// The intersection is computed by combining each constraint group from this
+// constraint with each group from the other using AND logic, then joining
+// all combinations with OR logic.
+//
+// For example, if this = "(>=1.0.0 <2.0.0) || (>=3.0.0 <4.0.0)" and
+// other = "(>=1.5.0 <3.5.0)", the result would be:
+// "(>=1.5.0 <2.0.0) || (>=3.0.0 <3.5.0)"
+//
+// Returns an error if the intersection is empty (no versions satisfy both
+// constraints). This can happen when the constraints are incompatible.
+func (vc *VersionConstraint) Intersect(other *VersionConstraint) (*VersionConstraint, error) {
+	if vc == nil || other == nil {
+		return nil, ErrNilConstraint
+	}
+
+	var intersectedGroups []constraintGroup
+	for _, g1 := range vc.constraints {
+		for _, g2 := range other.constraints {
+			combined := constraintGroup{
+				constraints: append(append([]constraint{}, g1.constraints...), g2.constraints...),
+			}
+
+			if err := validateConstraintGroup(combined); err != nil {
+				continue // Skip invalid combinations rather than failing entirely
+			}
+
+			intersectedGroups = append(intersectedGroups, combined)
+		}
+	}
+
+	if len(intersectedGroups) == 0 {
+		return nil, ErrIncompatibleConstraints
+	}
+
+	return &VersionConstraint{constraints: intersectedGroups}, nil
+}
+
 // Parses a version constraint string.
 //
 // Supports exact versions (1.2.3, =1.2.3), comparison operators (>, >=, <, <=,
@@ -94,10 +133,10 @@ func ParseVersionConstraint(s string) (*VersionConstraint, error) {
 	vc := &VersionConstraint{}
 
 	orParts := strings.Split(s, "||")
-	for i, orPart := range orParts {
+	for _, orPart := range orParts {
 		orPart = strings.TrimSpace(orPart)
 		if orPart == "" {
-			return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("empty version constraint in OR expression at position %d", i))
+			return nil, helpers.Wrap(ErrInvalidReference, ErrEmptyOrExpression)
 		}
 
 		group, err := parseConstraintGroup(orPart)
@@ -165,12 +204,12 @@ func parseTokens(tokens []string) ([]constraint, error) {
 		if i+2 < len(tokens) && isHyphenOperator(tokens[i+1]) {
 			lower, err := parseRangeBound(">=", tokens[i])
 			if err != nil {
-				return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid version lower bound %q", tokens[i]))
+				return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidRangeBound)
 			}
 
 			upper, err := parseRangeBound("<=", tokens[i+2])
 			if err != nil {
-				return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid version upper bound %q", tokens[i+2]))
+				return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidRangeBound)
 			}
 
 			constraints = append(constraints, lower, upper)
@@ -294,19 +333,19 @@ func parseSingleConstraint(op, version string) (constraint, error) {
 
 	match := versionPattern.FindStringSubmatch(version)
 	if match == nil {
-		return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid version format %q", version))
+		return c, helpers.Wrap(ErrInvalidReference, ErrInvalidVersionFormat)
 	}
 
 	major, err := strconv.Atoi(match[1])
 	if err != nil {
-		return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid major version %q", match[1]))
+		return c, helpers.Wrap(ErrInvalidReference, ErrInvalidMajorVersion)
 	}
 	c.major = major
 
 	if match[2] != "" {
 		minor, err := strconv.Atoi(match[2])
 		if err != nil {
-			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid minor version %q", match[2]))
+			return c, helpers.Wrap(ErrInvalidReference, ErrInvalidMinorVersion)
 		}
 		c.minor = minor
 		c.minorSet = true
@@ -315,14 +354,14 @@ func parseSingleConstraint(op, version string) (constraint, error) {
 	if match[3] != "" {
 		patch, err := strconv.Atoi(match[3])
 		if err != nil {
-			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid patch version %q", match[3]))
+			return c, helpers.Wrap(ErrInvalidReference, ErrInvalidPatchVersion)
 		}
 		c.patch = patch
 		c.patchSet = true
 	}
 
 	if match[4] != "" {
-		return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("prerelease in constraint %q", match[4]))
+		return c, helpers.Wrap(ErrInvalidReference, ErrPrereleaseInConstraint)
 	}
 
 	return c, nil
@@ -383,7 +422,7 @@ func parseWildcard(s string) (constraint, error) {
 	if len(parts) >= 1 && parts[0] != "" {
 		major, err := strconv.Atoi(parts[0])
 		if err != nil {
-			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid major version %q", parts[0]))
+			return c, helpers.Wrap(ErrInvalidReference, ErrInvalidMajorVersion)
 		}
 		c.major = major
 	}
@@ -391,7 +430,7 @@ func parseWildcard(s string) (constraint, error) {
 	if len(parts) >= 2 && parts[1] != "" {
 		minor, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return c, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid minor version %q", parts[1]))
+			return c, helpers.Wrap(ErrInvalidReference, ErrInvalidMinorVersion)
 		}
 		c.minor = minor
 		c.minorSet = true

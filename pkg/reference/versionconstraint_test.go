@@ -540,3 +540,166 @@ func TestParseVersionConstraint_PrereleaseInHyphenRangeRejected(t *testing.T) {
 		t.Error("expected error for prerelease in hyphen range")
 	}
 }
+
+// Intersect tests
+
+func TestVersionConstraint_Intersect_SimpleRanges(t *testing.T) {
+	vc1 := mustParseConstraint(t, ">=1.0.0 <3.0.0")
+	vc2 := mustParseConstraint(t, ">=2.0.0 <4.0.0")
+
+	result, err := vc1.Intersect(vc2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should match >=2.0.0 <3.0.0
+	if !mustMatch(t, result, "2.0.0") {
+		t.Error("intersected constraint should match 2.0.0")
+	}
+	if !mustMatch(t, result, "2.5.0") {
+		t.Error("intersected constraint should match 2.5.0")
+	}
+	if mustMatch(t, result, "1.5.0") {
+		t.Error("intersected constraint should not match 1.5.0")
+	}
+	if mustMatch(t, result, "3.0.0") {
+		t.Error("intersected constraint should not match 3.0.0")
+	}
+}
+
+func TestVersionConstraint_Intersect_WithOr(t *testing.T) {
+	// (>=1.0.0 <2.0.0) || (>=3.0.0 <4.0.0)
+	vc1 := mustParseConstraint(t, ">=1.0.0 <2.0.0 || >=3.0.0 <4.0.0")
+	// >=1.5.0 <3.5.0
+	vc2 := mustParseConstraint(t, ">=1.5.0 <3.5.0")
+
+	result, err := vc1.Intersect(vc2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should match (>=1.5.0 <2.0.0) || (>=3.0.0 <3.5.0)
+	if !mustMatch(t, result, "1.7.0") {
+		t.Error("intersected constraint should match 1.7.0")
+	}
+	if !mustMatch(t, result, "3.2.0") {
+		t.Error("intersected constraint should match 3.2.0")
+	}
+	if mustMatch(t, result, "1.4.0") {
+		t.Error("intersected constraint should not match 1.4.0")
+	}
+	if mustMatch(t, result, "2.5.0") {
+		t.Error("intersected constraint should not match 2.5.0")
+	}
+	if mustMatch(t, result, "3.6.0") {
+		t.Error("intersected constraint should not match 3.6.0")
+	}
+}
+
+func TestVersionConstraint_Intersect_NoOverlap(t *testing.T) {
+	vc1 := mustParseConstraint(t, ">=1.0.0 <2.0.0")
+	vc2 := mustParseConstraint(t, ">=3.0.0 <4.0.0")
+
+	result, err := vc1.Intersect(vc2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Result constraint should not match any versions in either range
+	if mustMatch(t, result, "1.5.0") {
+		t.Error("non-overlapping intersection should not match 1.5.0")
+	}
+	if mustMatch(t, result, "3.5.0") {
+		t.Error("non-overlapping intersection should not match 3.5.0")
+	}
+}
+
+func TestVersionConstraint_Intersect_Exact(t *testing.T) {
+	vc1 := mustParseConstraint(t, ">=1.0.0 <2.0.0")
+	vc2 := mustParseConstraint(t, "1.5.0")
+
+	result, err := vc1.Intersect(vc2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should only match 1.5.0
+	if !mustMatch(t, result, "1.5.0") {
+		t.Error("intersected constraint should match 1.5.0")
+	}
+	if mustMatch(t, result, "1.4.0") {
+		t.Error("intersected constraint should not match 1.4.0")
+	}
+	if mustMatch(t, result, "1.6.0") {
+		t.Error("intersected constraint should not match 1.6.0")
+	}
+}
+
+func TestVersionConstraint_Intersect_MultipleOr(t *testing.T) {
+	// (>=1.0.0 <2.0.0) || (>=3.0.0 <4.0.0)
+	vc1 := mustParseConstraint(t, ">=1.0.0 <2.0.0 || >=3.0.0 <4.0.0")
+	// (>=1.5.0 <2.5.0) || (>=3.5.0 <5.0.0)
+	vc2 := mustParseConstraint(t, ">=1.5.0 <2.5.0 || >=3.5.0 <5.0.0")
+
+	result, err := vc1.Intersect(vc2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should match (>=1.5.0 <2.0.0) || (>=3.5.0 <4.0.0)
+	if !mustMatch(t, result, "1.7.0") {
+		t.Error("intersected constraint should match 1.7.0")
+	}
+	if !mustMatch(t, result, "3.7.0") {
+		t.Error("intersected constraint should match 3.7.0")
+	}
+	if mustMatch(t, result, "1.4.0") {
+		t.Error("intersected constraint should not match 1.4.0")
+	}
+	if mustMatch(t, result, "2.1.0") {
+		t.Error("intersected constraint should not match 2.1.0")
+	}
+	if mustMatch(t, result, "3.4.0") {
+		t.Error("intersected constraint should not match 3.4.0")
+	}
+	if mustMatch(t, result, "4.1.0") {
+		t.Error("intersected constraint should not match 4.1.0")
+	}
+}
+
+func TestVersionConstraint_Intersect_NilConstraint(t *testing.T) {
+	vc1 := mustParseConstraint(t, ">=1.0.0 <2.0.0")
+	var vc2 *VersionConstraint
+
+	_, err := vc1.Intersect(vc2)
+	if err == nil {
+		t.Error("expected error for nil constraint")
+	}
+}
+
+func TestVersionConstraint_Intersect_WithNotEqual(t *testing.T) {
+	vc1 := mustParseConstraint(t, ">=1.0.0 <2.0.0 !=1.5.0")
+	vc2 := mustParseConstraint(t, ">=1.4.0 <1.8.0")
+
+	result, err := vc1.Intersect(vc2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should match >=1.4.0 <1.8.0 !=1.5.0
+	if !mustMatch(t, result, "1.4.0") {
+		t.Error("intersected constraint should match 1.4.0")
+	}
+	if !mustMatch(t, result, "1.6.0") {
+		t.Error("intersected constraint should match 1.6.0")
+	}
+	if mustMatch(t, result, "1.5.0") {
+		t.Error("intersected constraint should not match 1.5.0 (excluded by !=)")
+	}
+	if mustMatch(t, result, "1.3.0") {
+		t.Error("intersected constraint should not match 1.3.0")
+	}
+	if mustMatch(t, result, "1.8.0") {
+		t.Error("intersected constraint should not match 1.8.0")
+	}
+}

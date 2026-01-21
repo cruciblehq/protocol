@@ -1,7 +1,6 @@
 package reference
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -59,8 +58,8 @@ func (p *referenceParser) parse(contextType string) (*Reference, error) {
 		return nil, err
 	}
 
-	if tok, ok := p.peek(); ok {
-		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("unexpected token %q", tok))
+	if _, ok := p.peek(); ok {
+		return nil, helpers.Wrap(ErrInvalidReference, ErrUnexpectedToken)
 	}
 
 	return ref, nil

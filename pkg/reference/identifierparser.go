@@ -57,8 +57,8 @@ func (p *identifierParser) parse(contextType string) (*Identifier, error) {
 		return nil, err
 	}
 
-	if tok, ok := p.peek(); ok {
-		return nil, helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("unexpected token %q", tok))
+	if _, ok := p.peek(); ok {
+		return nil, helpers.Wrap(ErrInvalidIdentifier, ErrUnexpectedToken)
 	}
 
 	return id, nil
@@ -134,7 +134,7 @@ func (p *identifierParser) parseLocation(id *Identifier) error {
 // Parses a full URI (scheme://registry/path).
 func (p *identifierParser) parseURI(id *Identifier, scheme, rest string) error {
 	if !schemePattern.MatchString(scheme) {
-		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid scheme %q", scheme))
+		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidScheme)
 	}
 
 	registry, path, ok := strings.Cut(rest, "/")
@@ -146,11 +146,11 @@ func (p *identifierParser) parseURI(id *Identifier, scheme, rest string) error {
 	}
 
 	if !registryPattern.MatchString(registry) {
-		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid registry %q", registry))
+		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidRegistry)
 	}
 
 	if !pathPattern.MatchString(path) {
-		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid path %q", path))
+		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidPath)
 	}
 
 	id.scheme = scheme
@@ -163,7 +163,7 @@ func (p *identifierParser) parseURI(id *Identifier, scheme, rest string) error {
 // Parses a registry/path combination without scheme.
 func (p *identifierParser) parseRegistryPath(id *Identifier, registry, path string) error {
 	if !registryPattern.MatchString(registry) {
-		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid registry %q", registry))
+		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidRegistry)
 	}
 
 	if path == "" {
@@ -171,7 +171,7 @@ func (p *identifierParser) parseRegistryPath(id *Identifier, registry, path stri
 	}
 
 	if !pathPattern.MatchString(path) {
-		return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid path %q", path))
+		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidPath)
 	}
 
 	id.scheme = p.options.scheme()
@@ -188,16 +188,16 @@ func (p *identifierParser) parseDefaultPath(id *Identifier, tok string) error {
 
 	if namespace, name, ok := strings.Cut(tok, "/"); ok {
 		if !namePattern.MatchString(namespace) {
-			return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid namespace %q", namespace))
+			return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidNamespace)
 		}
 		if !namePattern.MatchString(name) {
-			return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid name %q", name))
+			return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidName)
 		}
 		id.namespace = namespace
 		id.name = name
 	} else {
 		if !namePattern.MatchString(tok) {
-			return helpers.Wrap(ErrInvalidIdentifier, fmt.Errorf("invalid name %q", tok))
+			return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidName)
 		}
 		id.namespace = p.options.namespace()
 		id.name = tok

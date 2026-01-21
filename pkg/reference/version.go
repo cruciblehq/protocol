@@ -1,7 +1,6 @@
 package reference
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -46,7 +45,7 @@ func ParseVersion(version string) (*Version, error) {
 		s = s[:idx]
 
 		if v.Build == "" || !buildPattern.MatchString(v.Build) {
-			return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid build metadata %q", version))
+			return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidBuildMetadata)
 		}
 	}
 
@@ -56,27 +55,27 @@ func ParseVersion(version string) (*Version, error) {
 		s = s[:idx]
 
 		if !prereleasePattern.MatchString(v.Prerelease) {
-			return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("prerelease must be identifier.number (e.g., alpha.1): %q", version))
+			return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidPrereleaseFormat)
 		}
 	}
 
 	// Parse version numbers
 	parts := strings.Split(s, ".")
 	if len(parts) != 3 {
-		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("version must have major.minor.patch format: %q", version))
+		return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidVersionComponents)
 	}
 
 	var err error
 	if v.Major, err = strconv.Atoi(parts[0]); err != nil || v.Major < 0 {
-		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid major version %q", version))
+		return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidMajorVersion)
 	}
 
 	if v.Minor, err = strconv.Atoi(parts[1]); err != nil || v.Minor < 0 {
-		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid minor version %q", version))
+		return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidMinorVersion)
 	}
 
 	if v.Patch, err = strconv.Atoi(parts[2]); err != nil || v.Patch < 0 {
-		return nil, helpers.Wrap(ErrInvalidReference, fmt.Errorf("invalid patch version %q", version))
+		return nil, helpers.Wrap(ErrInvalidReference, ErrInvalidPatchVersion)
 	}
 
 	return v, nil
