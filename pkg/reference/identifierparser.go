@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cruciblehq/protocol/internal/helpers"
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 var (
@@ -35,8 +36,8 @@ type identifierParser struct {
 }
 
 // Parses the tokens into an Identifier.
-func (p *identifierParser) parse(contextType string) (*Identifier, error) {
-	if !typePattern.MatchString(contextType) {
+func (p *identifierParser) parse(contextType resource.Type) (*Identifier, error) {
+	if !typePattern.MatchString(string(contextType)) {
 		return nil, helpers.Wrap(ErrInvalidIdentifier, ErrInvalidContextType)
 	}
 
@@ -82,8 +83,8 @@ func (p *identifierParser) next() (string, bool) {
 }
 
 // Parses the optional type prefix.
-func (p *identifierParser) parseType(id *Identifier, contextType string) error {
-	id.typ = contextType
+func (p *identifierParser) parseType(id *Identifier, contextType resource.Type) error {
+	id.typ = string(contextType)
 
 	tok, ok := p.peek()
 	if !ok || !typePattern.MatchString(tok) {
@@ -102,7 +103,7 @@ func (p *identifierParser) parseType(id *Identifier, contextType string) error {
 	}
 
 	// Token is a type; must match context.
-	if tok != contextType {
+	if tok != string(contextType) {
 		return helpers.Wrap(ErrTypeMismatch, fmt.Errorf("type %q does not match context %q", tok, contextType))
 	}
 	p.pos++

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cruciblehq/protocol/internal/helpers"
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 var (
@@ -24,7 +25,7 @@ type referenceParser struct {
 }
 
 // Parses the tokens into a Reference.
-func (p *referenceParser) parse(contextType string) (*Reference, error) {
+func (p *referenceParser) parse(contextType resource.Type) (*Reference, error) {
 
 	// Find where the identifier ends and version/channel begins
 	idEnd := p.findIdentifierEnd()

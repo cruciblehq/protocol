@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/cruciblehq/protocol/internal/helpers"
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 // Resource reference.
@@ -27,7 +28,7 @@ type Reference struct {
 //
 // The expected string format is:
 //
-//	[<type>] [[scheme://]registry/]<path> (<version> | <channel>) [<digest>]
+//	[<type>] [[scheme://]registry/]<path> (<version-constraint> | <channel>) [<digest>]
 //
 // The type is optional and must be lowercase alphabetic. When omitted, the
 // context type is used. When present, it must match the context type exactly.
@@ -50,7 +51,7 @@ type Reference struct {
 // content version.
 //
 // Options can be nil, in which case package defaults are used.
-func Parse(s string, contextType string, options *IdentifierOptions) (*Reference, error) {
+func Parse(s string, contextType resource.Type, options *IdentifierOptions) (*Reference, error) {
 	p := &referenceParser{
 		tokens:  strings.Fields(s),
 		options: options,
@@ -63,7 +64,7 @@ func Parse(s string, contextType string, options *IdentifierOptions) (*Reference
 }
 
 // Like [Parse], but panics on error.
-func MustParse(s string, contextType string, options *IdentifierOptions) *Reference {
+func MustParse(s string, contextType resource.Type, options *IdentifierOptions) *Reference {
 	ref, err := Parse(s, contextType, options)
 	if err != nil {
 		panic(err)

@@ -3,6 +3,7 @@ package manifest
 import (
 	"github.com/cruciblehq/protocol/internal/helpers"
 	"github.com/cruciblehq/protocol/pkg/codec"
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 // Loads and parses a manifest file.
@@ -45,8 +46,8 @@ func decodeManifest(raw map[string]any, manifest *Manifest) error {
 
 	// Resolve type-specific config
 	configs := map[string]any{
-		"widget":  &Widget{},
-		"service": &Service{},
+		string(resource.TypeWidget):  &Widget{},
+		string(resource.TypeService): &Service{},
 	}
 
 	target, ok := configs[manifest.Resource.Type]

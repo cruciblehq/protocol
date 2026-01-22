@@ -7,7 +7,7 @@
 //
 // A reference has the general format:
 //
-//	[<type>] [[scheme://]registry/]<path> (<version> | <channel>) [<digest>]
+//	[<type>] [[scheme://]registry/]<path> (<version-constraint> | <channel>) [<digest>]
 //
 // Scheme, registry (authority), and path together form the resource identifier
 // (or location), which specifies where to locate the resource. By default, the

@@ -2,16 +2,18 @@ package reference
 
 import (
 	"testing"
+
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 func TestParseIdentifier(t *testing.T) {
-	id, err := ParseIdentifier("namespace/name", "template", nil)
+	id, err := ParseIdentifier("namespace/name", resource.TypeTemplate, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if id.Type() != "template" {
-		t.Errorf("expected type %q, got %q", "template", id.Type())
+	if id.Type() != string(resource.TypeTemplate) {
+		t.Errorf("expected type %q, got %q", resource.TypeTemplate, id.Type())
 	}
 	if id.Namespace() != "namespace" {
 		t.Errorf("expected namespace %q, got %q", "namespace", id.Namespace())
@@ -28,7 +30,7 @@ func TestParseIdentifier_WithOptions(t *testing.T) {
 		DefaultNamespace: "crucible",
 	}
 
-	id, err := ParseIdentifier("widget", "template", opts)
+	id, err := ParseIdentifier("widget", resource.TypeTemplate, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,14 +47,14 @@ func TestParseIdentifier_WithOptions(t *testing.T) {
 }
 
 func TestParseIdentifier_Error(t *testing.T) {
-	_, err := ParseIdentifier("", "template", nil)
+	_, err := ParseIdentifier("", resource.TypeTemplate, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestMustParseIdentifier(t *testing.T) {
-	id := MustParseIdentifier("namespace/name", "template", nil)
+	id := MustParseIdentifier("namespace/name", resource.TypeTemplate, nil)
 
 	if id.Name() != "name" {
 		t.Errorf("expected name %q, got %q", "name", id.Name())
@@ -66,11 +68,11 @@ func TestMustParseIdentifier_Panic(t *testing.T) {
 		}
 	}()
 
-	MustParseIdentifier("", "template", nil)
+	MustParseIdentifier("", resource.TypeTemplate, nil)
 }
 
 func TestIdentifier_Path_DefaultRegistry(t *testing.T) {
-	id := MustParseIdentifier("namespace/name", "template", nil)
+	id := MustParseIdentifier("namespace/name", resource.TypeTemplate, nil)
 
 	if id.Path() != "namespace/name" {
 		t.Errorf("expected path %q, got %q", "namespace/name", id.Path())
@@ -78,7 +80,7 @@ func TestIdentifier_Path_DefaultRegistry(t *testing.T) {
 }
 
 func TestIdentifier_Path_CustomRegistry(t *testing.T) {
-	id := MustParseIdentifier("myregistry.com/path/to/resource", "template", nil)
+	id := MustParseIdentifier("myregistry.com/path/to/resource", resource.TypeTemplate, nil)
 
 	if id.Path() != "path/to/resource" {
 		t.Errorf("expected path %q, got %q", "path/to/resource", id.Path())
@@ -86,7 +88,7 @@ func TestIdentifier_Path_CustomRegistry(t *testing.T) {
 }
 
 func TestIdentifier_URI(t *testing.T) {
-	id := MustParseIdentifier("namespace/name", "template", nil)
+	id := MustParseIdentifier("namespace/name", resource.TypeTemplate, nil)
 
 	expected := "https://registry.crucible.net/namespace/name"
 	if id.URI() != expected {
@@ -95,7 +97,7 @@ func TestIdentifier_URI(t *testing.T) {
 }
 
 func TestIdentifier_String(t *testing.T) {
-	id := MustParseIdentifier("namespace/name", "template", nil)
+	id := MustParseIdentifier("namespace/name", resource.TypeTemplate, nil)
 
 	expected := "template https://registry.crucible.net/namespace/name"
 	if id.String() != expected {

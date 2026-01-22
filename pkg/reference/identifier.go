@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/cruciblehq/protocol/internal/helpers"
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 const (
@@ -86,7 +87,7 @@ func (o *IdentifierOptions) namespace() string {
 // first path segment.
 //
 // Options can be nil, in which case package defaults are used.
-func ParseIdentifier(s string, contextType string, options *IdentifierOptions) (*Identifier, error) {
+func ParseIdentifier(s string, contextType resource.Type, options *IdentifierOptions) (*Identifier, error) {
 	p := &identifierParser{
 		tokens:  strings.Fields(s),
 		options: options,
@@ -99,7 +100,7 @@ func ParseIdentifier(s string, contextType string, options *IdentifierOptions) (
 }
 
 // Like [ParseIdentifier], but panics on error.
-func MustParseIdentifier(s string, contextType string, options *IdentifierOptions) *Identifier {
+func MustParseIdentifier(s string, contextType resource.Type, options *IdentifierOptions) *Identifier {
 	id, err := ParseIdentifier(s, contextType, options)
 	if err != nil {
 		panic(err)

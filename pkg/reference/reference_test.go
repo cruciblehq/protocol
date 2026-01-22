@@ -2,16 +2,18 @@ package reference
 
 import (
 	"testing"
+
+	"github.com/cruciblehq/protocol/pkg/resource"
 )
 
 func TestParse(t *testing.T) {
-	ref, err := Parse("namespace/name 1.0.0", "template", nil)
+	ref, err := Parse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if ref.Type() != "template" {
-		t.Errorf("expected type %q, got %q", "template", ref.Type())
+	if ref.Type() != string(resource.TypeTemplate) {
+		t.Errorf("expected type %q, got %q", resource.TypeTemplate, ref.Type())
 	}
 	if ref.Namespace() != "namespace" {
 		t.Errorf("expected namespace %q, got %q", "namespace", ref.Namespace())
@@ -26,7 +28,7 @@ func TestParse_WithOptions(t *testing.T) {
 		DefaultNamespace: "myteam",
 	}
 
-	ref, err := Parse("widget 1.0.0", "template", opts)
+	ref, err := Parse("widget 1.0.0", resource.TypeTemplate, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,14 +39,14 @@ func TestParse_WithOptions(t *testing.T) {
 }
 
 func TestParse_Error(t *testing.T) {
-	_, err := Parse("", "template", nil)
+	_, err := Parse("", resource.TypeTemplate, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestMustParse(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", "template", nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 
 	if ref.Name() != "name" {
 		t.Errorf("expected name %q, got %q", "name", ref.Name())
@@ -58,11 +60,11 @@ func TestMustParse_Panic(t *testing.T) {
 		}
 	}()
 
-	MustParse("", "template", nil)
+	MustParse("", resource.TypeTemplate, nil)
 }
 
 func TestReference_Version(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", "template", nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 
 	if ref.Version() == nil {
 		t.Fatal("expected version, got nil")
@@ -70,7 +72,7 @@ func TestReference_Version(t *testing.T) {
 }
 
 func TestReference_Channel(t *testing.T) {
-	ref := MustParse("namespace/name :stable", "template", nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
 
 	if ref.Channel() == nil {
 		t.Fatal("expected channel, got nil")
@@ -81,7 +83,7 @@ func TestReference_Channel(t *testing.T) {
 }
 
 func TestReference_Digest(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", "template", nil)
+	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, nil)
 
 	if ref.Digest() == nil {
 		t.Fatal("expected digest, got nil")
@@ -89,7 +91,7 @@ func TestReference_Digest(t *testing.T) {
 }
 
 func TestReference_IsFrozen_True(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", "template", nil)
+	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, nil)
 
 	if !ref.IsFrozen() {
 		t.Error("expected IsFrozen to be true")
@@ -97,7 +99,7 @@ func TestReference_IsFrozen_True(t *testing.T) {
 }
 
 func TestReference_IsFrozen_False(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", "template", nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 
 	if ref.IsFrozen() {
 		t.Error("expected IsFrozen to be false")
@@ -105,7 +107,7 @@ func TestReference_IsFrozen_False(t *testing.T) {
 }
 
 func TestReference_IsChannelBased_True(t *testing.T) {
-	ref := MustParse("namespace/name :stable", "template", nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
 
 	if !ref.IsChannelBased() {
 		t.Error("expected IsChannelBased to be true")
@@ -113,7 +115,7 @@ func TestReference_IsChannelBased_True(t *testing.T) {
 }
 
 func TestReference_IsChannelBased_False(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", "template", nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 
 	if ref.IsChannelBased() {
 		t.Error("expected IsChannelBased to be false")
@@ -121,7 +123,7 @@ func TestReference_IsChannelBased_False(t *testing.T) {
 }
 
 func TestReference_IsVersionBased_True(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", "template", nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 
 	if !ref.IsVersionBased() {
 		t.Error("expected IsVersionBased to be true")
@@ -129,7 +131,7 @@ func TestReference_IsVersionBased_True(t *testing.T) {
 }
 
 func TestReference_IsVersionBased_False(t *testing.T) {
-	ref := MustParse("namespace/name :stable", "template", nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
 
 	if ref.IsVersionBased() {
 		t.Error("expected IsVersionBased to be false")
@@ -137,7 +139,7 @@ func TestReference_IsVersionBased_False(t *testing.T) {
 }
 
 func TestReference_String_WithVersion(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", "template", nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
 
 	s := ref.String()
 	if s == "" {
@@ -146,7 +148,7 @@ func TestReference_String_WithVersion(t *testing.T) {
 }
 
 func TestReference_String_WithChannel(t *testing.T) {
-	ref := MustParse("namespace/name :stable", "template", nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
 
 	s := ref.String()
 	if s == "" {
@@ -155,7 +157,7 @@ func TestReference_String_WithChannel(t *testing.T) {
 }
 
 func TestReference_String_WithDigest(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", "template", nil)
+	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, nil)
 
 	s := ref.String()
 	if s == "" {
