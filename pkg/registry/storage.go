@@ -3,6 +3,7 @@ package registry
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -70,7 +71,7 @@ func (r *SQLRegistry) storeArchiveFile(namespace, resource, version string, arch
 	}
 
 	// Calculate digest from hash
-	digest = hex.EncodeToString(hasher.Sum(nil))
+	digest = fmt.Sprintf("sha256:%s", hex.EncodeToString(hasher.Sum(nil)))
 
 	// Close temp file before rename (required on Windows)
 	if err := tempFile.Close(); err != nil {
