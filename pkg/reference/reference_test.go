@@ -12,7 +12,7 @@ func TestParse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if ref.Type() != string(resource.TypeTemplate) {
+	if ref.Type() != resource.TypeTemplate {
 		t.Errorf("expected type %q, got %q", resource.TypeTemplate, ref.Type())
 	}
 	if ref.Namespace() != "namespace" {

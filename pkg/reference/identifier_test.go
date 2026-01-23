@@ -12,7 +12,7 @@ func TestParseIdentifier(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.Type() != string(resource.TypeTemplate) {
+	if id.Type() != resource.TypeTemplate {
 		t.Errorf("expected type %q, got %q", resource.TypeTemplate, id.Type())
 	}
 	if id.Namespace() != "namespace" {

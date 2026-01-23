@@ -84,7 +84,7 @@ func (p *identifierParser) next() (string, bool) {
 
 // Parses the optional type prefix.
 func (p *identifierParser) parseType(id *Identifier, contextType resource.Type) error {
-	id.typ = string(contextType)
+	id.typ = contextType
 
 	tok, ok := p.peek()
 	if !ok || !typePattern.MatchString(tok) {

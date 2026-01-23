@@ -25,7 +25,7 @@ const (
 // An identifier locates a resource without specifying a particular version.
 // Use [ParseIdentifier] to construct valid identifiers.
 type Identifier struct {
-	typ       string
+	typ       resource.Type
 	scheme    string
 	registry  string
 	namespace string
@@ -108,8 +108,29 @@ func MustParseIdentifier(s string, contextType resource.Type, options *Identifie
 	return id
 }
 
+// Creates an identifier for a resource in the default registry.
+//
+// This constructor is useful for programmatically building identifiers when you
+// already have the components, avoiding the overhead of formatting and re-parsing.
+// Uses default values for scheme and registry. The namespace defaults to
+// "official" if empty.
+func NewIdentifier(typ resource.Type, namespace, name string) *Identifier {
+	if namespace == "" {
+		namespace = DefaultNamespace
+	}
+
+	return &Identifier{
+		typ:       typ,
+		scheme:    DefaultScheme,
+		registry:  DefaultRegistry,
+		namespace: namespace,
+		name:      name,
+		path:      "",
+	}
+}
+
 // Resource type (e.g., "widget"). Lowercase alphabetic only.
-func (id *Identifier) Type() string {
+func (id *Identifier) Type() resource.Type {
 	return id.typ
 }
 

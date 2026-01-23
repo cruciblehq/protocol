@@ -72,6 +72,40 @@ func MustParse(s string, contextType resource.Type, options *IdentifierOptions) 
 	return ref
 }
 
+// Creates a reference from an identifier, version or channel, and optional digest.
+//
+// Useful for programmatically building references when you already have the
+// parsed components, avoiding the overhead of formatting and re-parsing a
+// reference string. The versionOrChannel parameter should be either a version
+// constraint string (e.g., "1.2.3", ">=1.0.0 <2.0.0") or a channel name
+// (e.g., ":stable", ":latest"). The digest parameter is optional. When provided,
+// the reference becomes frozen, pointing to an exact immutable resource version.
+func New(id *Identifier, versionOrChannel string, digest *Digest) (*Reference, error) {
+	if id == nil {
+		return nil, helpers.Wrap(ErrInvalidReference, ErrEmptyReference)
+	}
+
+	ref := &Reference{
+		Identifier: *id,
+		digest:     digest,
+	}
+
+	// Check for channel using the same pattern as the parser
+	if channelPattern.MatchString(versionOrChannel) {
+		channelName := strings.TrimPrefix(versionOrChannel, ":")
+		ref.channel = &channelName
+	} else {
+		// Parse as version constraint
+		vc, err := ParseVersionConstraint(versionOrChannel)
+		if err != nil {
+			return nil, helpers.Wrap(ErrInvalidReference, err)
+		}
+		ref.version = vc
+	}
+
+	return ref, nil
+}
+
 // Semantic version constraint. Nil if channel-based.
 func (r *Reference) Version() *VersionConstraint {
 	return r.version

@@ -11,10 +11,10 @@ import (
 // required to run them. Generated during the planning phase by resolving
 // references, allocating infrastructure, and determining routing.
 type Plan struct {
-	Version        int             `field:"version"`
-	Services       []Service       `field:"services"`
-	Gateway        Gateway         `field:"gateway"`
-	Infrastructure Infrastructure  `field:"infrastructure"`
+	Version        int            `field:"version"`
+	Services       []Service      `field:"services"`
+	Gateway        Gateway        `field:"gateway"`
+	Infrastructure Infrastructure `field:"infrastructure"`
 }
 
 // Represents a service in the deployment plan.
