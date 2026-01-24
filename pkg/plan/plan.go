@@ -11,10 +11,12 @@ import (
 // required to run them. Generated during the planning phase by resolving
 // references, allocating infrastructure, and determining routing.
 type Plan struct {
-	Version        int            `field:"version"`
-	Services       []Service      `field:"services"`
-	Gateway        Gateway        `field:"gateway"`
-	Infrastructure Infrastructure `field:"infrastructure"`
+	Version      int           `field:"version"`
+	Services     []Service     `field:"services"`
+	Compute      []Compute     `field:"compute"`
+	Environments []Environment `field:"environments"`
+	Bindings     []Binding     `field:"bindings"`
+	Gateway      Gateway       `field:"gateway"`
 }
 
 // Represents a service in the deployment plan.
@@ -25,12 +27,34 @@ type Service struct {
 	Reference reference.Reference `field:"reference"`
 }
 
-// Represents the infrastructure configuration for deployment.
+// Represents a compute resource in the deployment plan.
 //
-// Specifies which provider the system will be deployed to. Provider-specific
-// configuration is resolved from provider profiles.
-type Infrastructure struct {
-	Provider string `field:"provider"`
+// Defines the compute instance to provision. This only describes the
+// infrastructure resource (what to allocate), not what runs on it.
+type Compute struct {
+	ID           string `field:"id"`
+	Provider     string `field:"provider"`
+	InstanceType string `field:"instance_type"`
+}
+
+// Represents an environment configuration.
+//
+// Defines a set of environment variables that can be associated with deployments.
+// Environments are declared separately and referenced by deployments.
+type Environment struct {
+	ID        string            `field:"id"`
+	Variables map[string]string `field:"variables"`
+}
+
+// Represents a binding of a service to compute infrastructure.
+//
+// Associates a service with a compute instance and optional environment
+// configuration. Multiple bindings of the same service enable replicas.
+// Multiple services on the same compute enable co-location.
+type Binding struct {
+	Service     string `field:"service"`
+	Compute     string `field:"compute"`
+	Environment string `field:"environment,omitempty"`
 }
 
 // Represents the API gateway configuration.
@@ -46,8 +70,8 @@ type Gateway struct {
 // Maps request patterns to service instances. The pattern supports path-based
 // routing and can be extended to support additional matching criteria.
 type Route struct {
-	Pattern   string `field:"pattern"`
-	ServiceID string `field:"service_id"`
+	Pattern string `field:"pattern"`
+	Service string `field:"service"`
 }
 
 // Saves the plan to a file.
