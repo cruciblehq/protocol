@@ -2,7 +2,6 @@ package plan
 
 import (
 	"github.com/cruciblehq/protocol/pkg/codec"
-	"github.com/cruciblehq/protocol/pkg/reference"
 )
 
 // Represents a deployment plan.
@@ -23,8 +22,8 @@ type Plan struct {
 //
 // Contains the resolved reference with exact version and digest.
 type Service struct {
-	ID        string              `field:"id"`
-	Reference reference.Reference `field:"reference"`
+	ID        string `field:"id"`
+	Reference string `field:"reference"`
 }
 
 // Represents a compute resource in the deployment plan.
@@ -77,8 +76,9 @@ type Route struct {
 // Saves the plan to a file.
 //
 // The file format is inferred from the path extension (.json, .yaml, .toml).
-func (p *Plan) Write(path string) error {
-	return codec.EncodeFile(path, "field", p)
+// The indent parameter controls whether JSON output should be pretty-printed.
+func (p *Plan) Write(path string, indent bool) error {
+	return codec.EncodeFile(path, "field", indent, p)
 }
 
 // Loads a plan from a file.

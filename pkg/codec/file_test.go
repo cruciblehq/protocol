@@ -13,7 +13,7 @@ func TestEncodeFile_JSON(t *testing.T) {
 
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	if err := EncodeFile(path, "key", v); err != nil {
+	if err := EncodeFile(path, "key", false, v); err != nil {
 		t.Fatal(err)
 	}
 
@@ -33,7 +33,7 @@ func TestEncodeFile_YAML(t *testing.T) {
 
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	if err := EncodeFile(path, "key", v); err != nil {
+	if err := EncodeFile(path, "key", false, v); err != nil {
 		t.Fatal(err)
 	}
 
@@ -53,7 +53,7 @@ func TestEncodeFile_YML(t *testing.T) {
 
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	if err := EncodeFile(path, "key", v); err != nil {
+	if err := EncodeFile(path, "key", false, v); err != nil {
 		t.Fatal(err)
 	}
 
@@ -73,7 +73,7 @@ func TestEncodeFile_TOML(t *testing.T) {
 
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	if err := EncodeFile(path, "key", v); err != nil {
+	if err := EncodeFile(path, "key", false, v); err != nil {
 		t.Fatal(err)
 	}
 
@@ -93,7 +93,7 @@ func TestEncodeFile_UnknownExtension(t *testing.T) {
 
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	err := EncodeFile(path, "key", v)
+	err := EncodeFile(path, "key", false, v)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -108,7 +108,7 @@ func TestEncodeFile_InvalidPath(t *testing.T) {
 
 	v := testStruct{Name: "test", Version: 1, Enabled: true}
 
-	err := EncodeFile(path, "key", v)
+	err := EncodeFile(path, "key", false, v)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -267,7 +267,7 @@ func TestRoundtripFile_JSON(t *testing.T) {
 
 	original := testStruct{Name: "test", Version: 42, Enabled: true}
 
-	if err := EncodeFile(path, "key", original); err != nil {
+	if err := EncodeFile(path, "key", false, original); err != nil {
 		t.Fatal(err)
 	}
 
@@ -294,7 +294,7 @@ func TestRoundtripFile_YAML(t *testing.T) {
 
 	original := testStruct{Name: "test", Version: 42, Enabled: true}
 
-	if err := EncodeFile(path, "key", original); err != nil {
+	if err := EncodeFile(path, "key", false, original); err != nil {
 		t.Fatal(err)
 	}
 
@@ -321,7 +321,7 @@ func TestRoundtripFile_TOML(t *testing.T) {
 
 	original := testStruct{Name: "test", Version: 42, Enabled: true}
 
-	if err := EncodeFile(path, "key", original); err != nil {
+	if err := EncodeFile(path, "key", false, original); err != nil {
 		t.Fatal(err)
 	}
 

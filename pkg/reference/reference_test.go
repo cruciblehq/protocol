@@ -7,7 +7,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	ref, err := Parse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref, err := Parse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,14 +39,14 @@ func TestParse_WithOptions(t *testing.T) {
 }
 
 func TestParse_Error(t *testing.T) {
-	_, err := Parse("", resource.TypeTemplate, nil)
+	_, err := Parse("", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestMustParse(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.Name() != "name" {
 		t.Errorf("expected name %q, got %q", "name", ref.Name())
@@ -60,11 +60,11 @@ func TestMustParse_Panic(t *testing.T) {
 		}
 	}()
 
-	MustParse("", resource.TypeTemplate, nil)
+	MustParse("", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 }
 
 func TestReference_Version(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.Version() == nil {
 		t.Fatal("expected version, got nil")
@@ -72,7 +72,7 @@ func TestReference_Version(t *testing.T) {
 }
 
 func TestReference_Channel(t *testing.T) {
-	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.Channel() == nil {
 		t.Fatal("expected channel, got nil")
@@ -83,7 +83,7 @@ func TestReference_Channel(t *testing.T) {
 }
 
 func TestReference_Digest(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.Digest() == nil {
 		t.Fatal("expected digest, got nil")
@@ -91,7 +91,7 @@ func TestReference_Digest(t *testing.T) {
 }
 
 func TestReference_IsFrozen_True(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if !ref.IsFrozen() {
 		t.Error("expected IsFrozen to be true")
@@ -99,7 +99,7 @@ func TestReference_IsFrozen_True(t *testing.T) {
 }
 
 func TestReference_IsFrozen_False(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.IsFrozen() {
 		t.Error("expected IsFrozen to be false")
@@ -107,7 +107,7 @@ func TestReference_IsFrozen_False(t *testing.T) {
 }
 
 func TestReference_IsChannelBased_True(t *testing.T) {
-	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if !ref.IsChannelBased() {
 		t.Error("expected IsChannelBased to be true")
@@ -115,7 +115,7 @@ func TestReference_IsChannelBased_True(t *testing.T) {
 }
 
 func TestReference_IsChannelBased_False(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.IsChannelBased() {
 		t.Error("expected IsChannelBased to be false")
@@ -123,7 +123,7 @@ func TestReference_IsChannelBased_False(t *testing.T) {
 }
 
 func TestReference_IsVersionBased_True(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if !ref.IsVersionBased() {
 		t.Error("expected IsVersionBased to be true")
@@ -131,7 +131,7 @@ func TestReference_IsVersionBased_True(t *testing.T) {
 }
 
 func TestReference_IsVersionBased_False(t *testing.T) {
-	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	if ref.IsVersionBased() {
 		t.Error("expected IsVersionBased to be false")
@@ -139,7 +139,7 @@ func TestReference_IsVersionBased_False(t *testing.T) {
 }
 
 func TestReference_String_WithVersion(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	s := ref.String()
 	if s == "" {
@@ -148,7 +148,7 @@ func TestReference_String_WithVersion(t *testing.T) {
 }
 
 func TestReference_String_WithChannel(t *testing.T) {
-	ref := MustParse("namespace/name :stable", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name :stable", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	s := ref.String()
 	if s == "" {
@@ -157,7 +157,7 @@ func TestReference_String_WithChannel(t *testing.T) {
 }
 
 func TestReference_String_WithDigest(t *testing.T) {
-	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, nil)
+	ref := MustParse("namespace/name 1.0.0 sha256:abcd1234", resource.TypeTemplate, &IdentifierOptions{DefaultRegistry: "https://registry.test"})
 
 	s := ref.String()
 	if s == "" {

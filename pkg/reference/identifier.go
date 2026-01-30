@@ -10,12 +10,6 @@ import (
 
 const (
 
-	// Default protocol scheme.
-	DefaultScheme = "https"
-
-	// Default registry authority.
-	DefaultRegistry = "registry.crucible.net"
-
 	// Default namespace for resources in the default registry.
 	DefaultNamespace = "official"
 )
@@ -26,7 +20,6 @@ const (
 // Use [ParseIdentifier] to construct valid identifiers.
 type Identifier struct {
 	typ       resource.Type
-	scheme    string
 	registry  string
 	namespace string
 	name      string
@@ -35,25 +28,13 @@ type Identifier struct {
 
 // Options for parsing identifiers.
 type IdentifierOptions struct {
-	DefaultScheme    string // Protocol scheme when not specified. Uses [DefaultScheme] if empty.
-	DefaultRegistry  string // Registry authority when not specified. Uses [DefaultRegistry] if empty.
+	DefaultRegistry  string // Registry authority when not specified.
 	DefaultNamespace string // Namespace when not specified. Uses [DefaultNamespace] if empty.
 }
 
-// Returns the scheme, using the package default if not set.
-func (o *IdentifierOptions) scheme() string {
-	if o != nil && o.DefaultScheme != "" {
-		return o.DefaultScheme
-	}
-	return DefaultScheme
-}
-
-// Returns the registry, using the package default if not set.
+// Returns the registry from options.
 func (o *IdentifierOptions) registry() string {
-	if o != nil && o.DefaultRegistry != "" {
-		return o.DefaultRegistry
-	}
-	return DefaultRegistry
+	return o.DefaultRegistry
 }
 
 // Returns the namespace, using the package default if not set.
@@ -108,21 +89,15 @@ func MustParseIdentifier(s string, contextType resource.Type, options *Identifie
 	return id
 }
 
-// Creates an identifier for a resource in the default registry.
-//
-// This constructor is useful for programmatically building identifiers when you
-// already have the components, avoiding the overhead of formatting and re-parsing.
-// Uses default values for scheme and registry. The namespace defaults to
-// "official" if empty.
-func NewIdentifier(typ resource.Type, namespace, name string) *Identifier {
+// Creates a new identifier.
+func NewIdentifier(typ resource.Type, registry, namespace, name string) *Identifier {
 	if namespace == "" {
 		namespace = DefaultNamespace
 	}
 
 	return &Identifier{
 		typ:       typ,
-		scheme:    DefaultScheme,
-		registry:  DefaultRegistry,
+		registry:  registry,
 		namespace: namespace,
 		name:      name,
 		path:      "",
@@ -132,11 +107,6 @@ func NewIdentifier(typ resource.Type, namespace, name string) *Identifier {
 // Resource type (e.g., "widget"). Lowercase alphabetic only.
 func (id *Identifier) Type() resource.Type {
 	return id.typ
-}
-
-// Protocol scheme (e.g., "https").
-func (id *Identifier) Scheme() string {
-	return id.scheme
 }
 
 // Registry authority (e.g., "registry.crucible.net").
@@ -168,9 +138,9 @@ func (id *Identifier) Path() string {
 	return id.namespace + "/" + id.name
 }
 
-// Returns the full URI, including scheme, registry, and path.
+// Returns the full URI, including registry and path.
 func (id *Identifier) URI() string {
-	return fmt.Sprintf("%s://%s/%s", id.Scheme(), id.Registry(), id.Path())
+	return fmt.Sprintf("%s/%s", id.Registry(), id.Path())
 }
 
 // Returns the canonical string representation.

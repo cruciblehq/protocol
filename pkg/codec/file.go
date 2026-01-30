@@ -11,9 +11,10 @@ import (
 // Encodes a value to a file.
 //
 // The content type is inferred from the file extension. The key parameter
-// specifies the struct tag to use for field mapping. The v parameter is the
+// specifies the struct tag to use for field mapping. The indent parameter
+// controls whether JSON output should be pretty-printed. The v parameter is the
 // value to be encoded. The path parameter is the file path to write to.
-func EncodeFile(path, key string, v any) error {
+func EncodeFile(path, key string, indent bool, v any) error {
 	ct, err := contentTypeFromExtension(path)
 	if err != nil {
 		return err
@@ -25,7 +26,7 @@ func EncodeFile(path, key string, v any) error {
 	}
 	defer f.Close()
 
-	if err := Encode(f, ct, key, v); err != nil {
+	if err := Encode(f, ct, key, indent, v); err != nil {
 		return err
 	}
 

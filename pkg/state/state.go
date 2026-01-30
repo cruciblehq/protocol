@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/cruciblehq/protocol/pkg/codec"
-	"github.com/cruciblehq/protocol/pkg/reference"
 )
 
 // Represents the current state of a deployment.
@@ -29,14 +28,14 @@ type Deployment struct {
 //
 // Tracks the service identity and its provider-specific resource identifier.
 type Service struct {
-	ID         string              `field:"id"`
-	Reference  reference.Reference `field:"reference"`
-	ResourceID string              `field:"resource_id"`
+	ID         string `field:"id"`
+	Reference  string `field:"reference"`
+	ResourceID string `field:"resource_id"`
 }
 
 // Saves the state to a file.
 func (s *State) Write(path string) error {
-	return codec.EncodeFile(path, "field", s)
+	return codec.EncodeFile(path, "field", false, s)
 }
 
 // Loads a state from a file.

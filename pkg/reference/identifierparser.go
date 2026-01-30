@@ -2,6 +2,7 @@ package reference
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -46,7 +47,6 @@ func (p *identifierParser) parse(contextType resource.Type) (*Identifier, error)
 	}
 
 	id := &Identifier{
-		scheme:   p.options.scheme(),
 		registry: p.options.registry(),
 	}
 
@@ -154,8 +154,11 @@ func (p *identifierParser) parseURI(id *Identifier, scheme, rest string) error {
 		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidPath)
 	}
 
-	id.scheme = scheme
-	id.registry = registry
+	u := &url.URL{
+		Scheme: scheme,
+		Host:   registry,
+	}
+	id.registry = u.String()
 	id.path = path
 
 	return nil
@@ -175,8 +178,11 @@ func (p *identifierParser) parseRegistryPath(id *Identifier, registry, path stri
 		return helpers.Wrap(ErrInvalidIdentifier, ErrInvalidPath)
 	}
 
-	id.scheme = p.options.scheme()
-	id.registry = registry
+	u := &url.URL{
+		Scheme: "https",
+		Host:   registry,
+	}
+	id.registry = u.String()
 	id.path = path
 
 	return nil
@@ -184,7 +190,6 @@ func (p *identifierParser) parseRegistryPath(id *Identifier, registry, path stri
 
 // Parses a default registry path (namespace/name or just name).
 func (p *identifierParser) parseDefaultPath(id *Identifier, tok string) error {
-	id.scheme = p.options.scheme()
 	id.registry = p.options.registry()
 
 	if namespace, name, ok := strings.Cut(tok, "/"); ok {

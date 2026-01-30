@@ -8,7 +8,7 @@ import (
 func TestIdentifierParser_Parse_NameOnly(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"widget"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id, err := p.parse("template")
@@ -18,12 +18,6 @@ func TestIdentifierParser_Parse_NameOnly(t *testing.T) {
 
 	if id.typ != "template" {
 		t.Errorf("expected type %q, got %q", "template", id.typ)
-	}
-	if id.scheme != DefaultScheme {
-		t.Errorf("expected scheme %q, got %q", DefaultScheme, id.scheme)
-	}
-	if id.registry != DefaultRegistry {
-		t.Errorf("expected registry %q, got %q", DefaultRegistry, id.registry)
 	}
 	if id.namespace != DefaultNamespace {
 		t.Errorf("expected namespace %q, got %q", DefaultNamespace, id.namespace)
@@ -36,7 +30,7 @@ func TestIdentifierParser_Parse_NameOnly(t *testing.T) {
 func TestIdentifierParser_Parse_NamespaceAndName(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id, err := p.parse("template")
@@ -55,7 +49,7 @@ func TestIdentifierParser_Parse_NamespaceAndName(t *testing.T) {
 func TestIdentifierParser_Parse_WithExplicitType(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"template", "namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id, err := p.parse("template")
@@ -74,7 +68,7 @@ func TestIdentifierParser_Parse_WithExplicitType(t *testing.T) {
 func TestIdentifierParser_Parse_FullURI(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"https://myregistry.com/path/to/resource"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id, err := p.parse("template")
@@ -82,11 +76,8 @@ func TestIdentifierParser_Parse_FullURI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.scheme != "https" {
-		t.Errorf("expected scheme %q, got %q", "https", id.scheme)
-	}
-	if id.registry != "myregistry.com" {
-		t.Errorf("expected registry %q, got %q", "myregistry.com", id.registry)
+	if id.registry != "https://myregistry.com" {
+		t.Errorf("expected registry %q, got %q", "https://myregistry.com", id.registry)
 	}
 	if id.path != "path/to/resource" {
 		t.Errorf("expected path %q, got %q", "path/to/resource", id.path)
@@ -96,7 +87,7 @@ func TestIdentifierParser_Parse_FullURI(t *testing.T) {
 func TestIdentifierParser_Parse_RegistryAndPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"myregistry.com/path/to/resource"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id, err := p.parse("template")
@@ -104,11 +95,8 @@ func TestIdentifierParser_Parse_RegistryAndPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.scheme != DefaultScheme {
-		t.Errorf("expected scheme %q, got %q", DefaultScheme, id.scheme)
-	}
-	if id.registry != "myregistry.com" {
-		t.Errorf("expected registry %q, got %q", "myregistry.com", id.registry)
+	if id.registry != "https://myregistry.com" {
+		t.Errorf("expected registry %q, got %q", "https://myregistry.com", id.registry)
 	}
 	if id.path != "path/to/resource" {
 		t.Errorf("expected path %q, got %q", "path/to/resource", id.path)
@@ -119,8 +107,7 @@ func TestIdentifierParser_Parse_WithOptions(t *testing.T) {
 	p := &identifierParser{
 		tokens: []string{"widget"},
 		options: &IdentifierOptions{
-			DefaultScheme:    "oci",
-			DefaultRegistry:  "custom.registry.io",
+			DefaultRegistry:  "https://custom.registry.io",
 			DefaultNamespace: "myteam",
 		},
 	}
@@ -130,11 +117,8 @@ func TestIdentifierParser_Parse_WithOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.scheme != "oci" {
-		t.Errorf("expected scheme %q, got %q", "oci", id.scheme)
-	}
-	if id.registry != "custom.registry.io" {
-		t.Errorf("expected registry %q, got %q", "custom.registry.io", id.registry)
+	if id.registry != "https://custom.registry.io" {
+		t.Errorf("expected registry %q, got %q", "https://custom.registry.io", id.registry)
 	}
 	if id.namespace != "myteam" {
 		t.Errorf("expected namespace %q, got %q", "myteam", id.namespace)
@@ -144,7 +128,7 @@ func TestIdentifierParser_Parse_WithOptions(t *testing.T) {
 func TestIdentifierParser_Parse_InvalidContextType(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"widget"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	_, err := p.parse("Invalid")
@@ -160,7 +144,7 @@ func TestIdentifierParser_Parse_InvalidContextType(t *testing.T) {
 func TestIdentifierParser_Parse_EmptyTokens(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	_, err := p.parse("template")
@@ -176,7 +160,7 @@ func TestIdentifierParser_Parse_EmptyTokens(t *testing.T) {
 func TestIdentifierParser_Parse_TypeMismatch(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"plugin", "namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	_, err := p.parse("template")
@@ -192,7 +176,7 @@ func TestIdentifierParser_Parse_TypeMismatch(t *testing.T) {
 func TestIdentifierParser_Parse_UnexpectedToken(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"namespace/name", "extra"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	_, err := p.parse("template")
@@ -262,7 +246,7 @@ func TestIdentifierParser_Next(t *testing.T) {
 func TestIdentifierParser_ParseType_ContextOnly(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -283,7 +267,7 @@ func TestIdentifierParser_ParseType_ContextOnly(t *testing.T) {
 func TestIdentifierParser_ParseType_Explicit(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"template", "namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -304,7 +288,7 @@ func TestIdentifierParser_ParseType_Explicit(t *testing.T) {
 func TestIdentifierParser_ParseType_Mismatch(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"plugin", "namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -321,7 +305,7 @@ func TestIdentifierParser_ParseType_Mismatch(t *testing.T) {
 func TestIdentifierParser_ParseType_NonAlphabetic(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"123", "namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -338,7 +322,7 @@ func TestIdentifierParser_ParseType_NonAlphabetic(t *testing.T) {
 func TestIdentifierParser_ParseType_SingleToken(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"widget"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -355,7 +339,7 @@ func TestIdentifierParser_ParseType_SingleToken(t *testing.T) {
 func TestIdentifierParser_ParseLocation_DefaultPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"widget"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -374,7 +358,7 @@ func TestIdentifierParser_ParseLocation_DefaultPath(t *testing.T) {
 func TestIdentifierParser_ParseLocation_NamespaceAndName(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{"namespace/name"},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -393,7 +377,7 @@ func TestIdentifierParser_ParseLocation_NamespaceAndName(t *testing.T) {
 func TestIdentifierParser_ParseLocation_Empty(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -410,7 +394,7 @@ func TestIdentifierParser_ParseLocation_Empty(t *testing.T) {
 func TestIdentifierParser_ParseURI(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -418,11 +402,8 @@ func TestIdentifierParser_ParseURI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.scheme != "https" {
-		t.Errorf("expected scheme %q, got %q", "https", id.scheme)
-	}
-	if id.registry != "myregistry.com" {
-		t.Errorf("expected registry %q, got %q", "myregistry.com", id.registry)
+	if id.registry != "https://myregistry.com" {
+		t.Errorf("expected registry %q, got %q", "https://myregistry.com", id.registry)
 	}
 	if id.path != "path/to/resource" {
 		t.Errorf("expected path %q, got %q", "path/to/resource", id.path)
@@ -432,7 +413,7 @@ func TestIdentifierParser_ParseURI(t *testing.T) {
 func TestIdentifierParser_ParseURI_InvalidScheme(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -449,7 +430,7 @@ func TestIdentifierParser_ParseURI_InvalidScheme(t *testing.T) {
 func TestIdentifierParser_ParseURI_InvalidRegistry(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -466,7 +447,7 @@ func TestIdentifierParser_ParseURI_InvalidRegistry(t *testing.T) {
 func TestIdentifierParser_ParseURI_InvalidPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -483,7 +464,7 @@ func TestIdentifierParser_ParseURI_InvalidPath(t *testing.T) {
 func TestIdentifierParser_ParseURI_MissingPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -500,7 +481,7 @@ func TestIdentifierParser_ParseURI_MissingPath(t *testing.T) {
 func TestIdentifierParser_ParseURI_EmptyPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -517,7 +498,7 @@ func TestIdentifierParser_ParseURI_EmptyPath(t *testing.T) {
 func TestIdentifierParser_ParseRegistryPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -525,39 +506,18 @@ func TestIdentifierParser_ParseRegistryPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.scheme != DefaultScheme {
-		t.Errorf("expected scheme %q, got %q", DefaultScheme, id.scheme)
-	}
-	if id.registry != "myregistry.com" {
-		t.Errorf("expected registry %q, got %q", "myregistry.com", id.registry)
+	if id.registry != "https://myregistry.com" {
+		t.Errorf("expected registry %q, got %q", "https://myregistry.com", id.registry)
 	}
 	if id.path != "path/to/resource" {
 		t.Errorf("expected path %q, got %q", "path/to/resource", id.path)
 	}
 }
 
-func TestIdentifierParser_ParseRegistryPath_WithOptions(t *testing.T) {
-	p := &identifierParser{
-		tokens: []string{},
-		options: &IdentifierOptions{
-			DefaultScheme: "oci",
-		},
-	}
-
-	id := &Identifier{}
-	if err := p.parseRegistryPath(id, "myregistry.com", "path/to/resource"); err != nil {
-		t.Fatal(err)
-	}
-
-	if id.scheme != "oci" {
-		t.Errorf("expected scheme %q, got %q", "oci", id.scheme)
-	}
-}
-
 func TestIdentifierParser_ParseRegistryPath_InvalidRegistry(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -574,7 +534,7 @@ func TestIdentifierParser_ParseRegistryPath_InvalidRegistry(t *testing.T) {
 func TestIdentifierParser_ParseRegistryPath_EmptyPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -591,7 +551,7 @@ func TestIdentifierParser_ParseRegistryPath_EmptyPath(t *testing.T) {
 func TestIdentifierParser_ParseRegistryPath_InvalidPath(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -608,7 +568,7 @@ func TestIdentifierParser_ParseRegistryPath_InvalidPath(t *testing.T) {
 func TestIdentifierParser_ParseDefaultPath_NameOnly(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -627,7 +587,7 @@ func TestIdentifierParser_ParseDefaultPath_NameOnly(t *testing.T) {
 func TestIdentifierParser_ParseDefaultPath_WithNamespace(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -647,8 +607,7 @@ func TestIdentifierParser_ParseDefaultPath_WithOptions(t *testing.T) {
 	p := &identifierParser{
 		tokens: []string{},
 		options: &IdentifierOptions{
-			DefaultScheme:    "oci",
-			DefaultRegistry:  "custom.registry.io",
+			DefaultRegistry:  "https://custom.registry.io",
 			DefaultNamespace: "namespace",
 		},
 	}
@@ -658,11 +617,8 @@ func TestIdentifierParser_ParseDefaultPath_WithOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if id.scheme != "oci" {
-		t.Errorf("expected scheme %q, got %q", "oci", id.scheme)
-	}
-	if id.registry != "custom.registry.io" {
-		t.Errorf("expected registry %q, got %q", "custom.registry.io", id.registry)
+	if id.registry != "https://custom.registry.io" {
+		t.Errorf("expected registry %q, got %q", "https://custom.registry.io", id.registry)
 	}
 	if id.namespace != "namespace" {
 		t.Errorf("expected namespace %q, got %q", "namespace", id.namespace)
@@ -672,7 +628,7 @@ func TestIdentifierParser_ParseDefaultPath_WithOptions(t *testing.T) {
 func TestIdentifierParser_ParseDefaultPath_InvalidName(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -689,7 +645,7 @@ func TestIdentifierParser_ParseDefaultPath_InvalidName(t *testing.T) {
 func TestIdentifierParser_ParseDefaultPath_InvalidNamespace(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
@@ -706,7 +662,7 @@ func TestIdentifierParser_ParseDefaultPath_InvalidNamespace(t *testing.T) {
 func TestIdentifierParser_ParseDefaultPath_InvalidNameInNamespace(t *testing.T) {
 	p := &identifierParser{
 		tokens:  []string{},
-		options: nil,
+		options: &IdentifierOptions{DefaultRegistry: "https://registry.test"},
 	}
 
 	id := &Identifier{}
