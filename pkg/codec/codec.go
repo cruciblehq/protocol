@@ -149,8 +149,8 @@ func convertValue(v reflect.Value, tagName string) (any, error) {
 		return nil, nil
 	}
 
-	// Dereference pointers
-	for v.Kind() == reflect.Ptr {
+	// Dereference pointers and interfaces
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
 		if v.IsNil() {
 			return nil, nil
 		}

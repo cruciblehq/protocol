@@ -13,7 +13,7 @@ type Plan struct {
 	Version      int           `field:"version"`
 	Services     []Service     `field:"services"`
 	Compute      []Compute     `field:"compute"`
-	Environments []Environment `field:"environments"`
+	Environments []Environment `field:"environments,omitempty"`
 	Bindings     []Binding     `field:"bindings"`
 	Gateway      Gateway       `field:"gateway"`
 }
@@ -28,13 +28,26 @@ type Service struct {
 
 // Represents a compute resource in the deployment plan.
 //
-// Defines the compute instance to provision. This only describes the
-// infrastructure resource (what to allocate), not what runs on it.
+// Defines the compute instance to provision. The Config field contains
+// provider-specific configuration based on the Provider value.
 type Compute struct {
-	ID           string `field:"id"`
-	Provider     string `field:"provider"`
-	InstanceType string `field:"instance_type"`
+	ID       string `field:"id"`
+	Provider string `field:"provider"`
+	Config   any    `field:"config,omitempty"`
 }
+
+// AWS compute configuration.
+//
+// Specifies EC2 instance settings for AWS deployments.
+type ComputeAWS struct {
+	InstanceType string `field:"instance_type"`
+	Region       string `field:"region,omitempty"`
+}
+
+// Local compute configuration.
+//
+// No additional configuration needed for local deployments.
+type ComputeLocal struct{}
 
 // Represents an environment configuration.
 //
@@ -61,7 +74,7 @@ type Binding struct {
 // Defines how external requests are routed to deployed services. For now,
 // nginx is used as the gateway implementation with a default listen address.
 type Gateway struct {
-	Routes []Route `field:"routes"`
+	Routes []Route `field:"routes,omitempty"`
 }
 
 // Represents a routing rule in the gateway.
